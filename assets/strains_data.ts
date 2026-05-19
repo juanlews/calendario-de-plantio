@@ -1,3 +1,28 @@
+// strains_data.ts — Compact version of cannabis-strains.csv
+//
+// Key abbreviation mapping (original CSV → compact keys):
+//   strain_name           → n   (name)
+//   breeder               → b   (breeder)
+//   seed_type             → t   (type: indica | sativa | hybrid | autoflower)
+//   thc                   → thc (THC range [min, max])
+//   flowering_time        → fd  (flowering days)
+//   height_indoor         → h   (height)
+//   yield_indoor          → y   (yield)
+//   effect                → e   (effects array)
+//   flavor                → f   (flavors array)
+//   description           → d   (description)
+//
+// Removed columns (not used in app):
+//   current_price_gbp, original_price_gbp, discount_percent, pack_options,
+//   product_url, overview, growth_and_harvest, experience, indica_sativa,
+//   type_ratio, strain_type_summary, environment, strength, medical_strains,
+//   smell_taste, climate, cbd, yield_outdoor, height_outdoor,
+//   indoor_height_detail, indoor_flowering_time, outdoor_harvest_time,
+//   harvest_month, genetic_background, stock_availability, sale_item,
+//   most_popular_seeds
+//
+// Source: Seed City (https://www.seed-city.com/)
+
 export const strainsData = [
 {n:"A Little Kushy Auto",b:"Freedom of Seeds",t:"autoflower",thc:[20.0, 20.0],fd:null,h:"\u2014",y:"\u2014",e:["Relaxing"],f:["Citrus"],d:"This is White Widow, a high-quality cannabis strain known for its unique characteristics and effects." },
 {n:"A-Train",b:"Anesia Seeds",t:"hybrid",thc:[24.0, 24.0],fd:58,h:"\u2014",y:"\u2014",e:["Relaxing"],f:["Citrus"],d:"A-Train is a balanced 50/50 hybrid combining Arcata Trainwreck and Mazar-I-Sharif, known for its potency, lemony aroma, and fruity taste with a hint of hashish. It exhibits traits leaning more towards" },
