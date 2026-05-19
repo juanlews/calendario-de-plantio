@@ -1,3 +1,4 @@
+// Source: https://huggingface.co/datasets/JonusNattapong/cannabis-strains (JonusNattapong)
 // strains_db.json format: { d: [[name,breeder,type,thc[min,max],fd,h,y,effects[],flavors[]],...], total: number }
 // type in DB: 'indica' | 'sativa' | 'hybrid' | 'autoflower'
 // autoflower in DB is a combined type — we separate genetics from flowering type

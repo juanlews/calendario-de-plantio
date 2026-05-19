@@ -45,13 +45,13 @@ npx expo start
 
 ## Créditos e Base de Dados
 
-A base de dados de strains foi compilada a partir de dados públicos disponíveis em:
+A base de dados de strains utilizada neste app foi extraída e adaptada a partir do dataset:
 
-- **[Seed City](https://www.seed-city.com/)** — catálogo de sementes de cannabis com dados de breeder, THC, tempo de floração, efeitos, sabores e rendimento.
+- **[cannabis-strains](https://huggingface.co/datasets/JonusNattapong/cannabis-strains)** por **[JonusNattapong](https://huggingface.co/JonusNattapong)** no Hugging Face — contém mais de 8.000 strains com dados de breeder, THC, CBD, tempo de floração, efeitos, sabores, rendimento e muito mais.
 
-Os dados originais (CSV com ~35 colunas) foram processados e compactados para um formato JSON otimizado, contendo apenas os campos relevantes para o app.
+Os dados originais (`cannabis-strains.csv`, ~35 colunas) foram processados e compactados para um formato JSON otimizado, contendo apenas os campos relevantes para o app.
 
-**Agradecimento** aos contribuidores e curadores da base de dados do Seed City por manterem essas informações acessíveis.
+**Agradecimento** a **JonusNattapong** por compilar e disponibilizar publicamente essa base de dados.
 
 ## Licença
 

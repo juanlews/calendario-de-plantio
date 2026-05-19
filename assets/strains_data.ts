@@ -21,7 +21,9 @@
 //   harvest_month, genetic_background, stock_availability, sale_item,
 //   most_popular_seeds
 //
-// Source: Seed City (https://www.seed-city.com/)
+// Source: https://huggingface.co/datasets/JonusNattapong/cannabis-strains
+// Original author: JonusNattapong
+// Derived from cannabis-strains.csv — processed & compacted.
 
 export const strainsData = [
 {n:"A Little Kushy Auto",b:"Freedom of Seeds",t:"autoflower",thc:[20.0, 20.0],fd:null,h:"\u2014",y:"\u2014",e:["Relaxing"],f:["Citrus"],d:"This is White Widow, a high-quality cannabis strain known for its unique characteristics and effects." },
