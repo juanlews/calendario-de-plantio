@@ -1,15 +1,31 @@
 import { format, differenceInDays, addDays, parseISO, isValid, isBefore, isAfter, startOfDay, isToday as isTodayFn } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { GrowthStage, FloweringType } from '../types/planting';
+import type { CannabisPlanting, GrowthStage, FloweringType } from '../types/planting';
 
-/** Format date to DD/MM/YYYY */
+/** Display name for a plant: nickname (if set) or strainName, with seed date */
+export const plantDisplayName = (
+  p: Pick<CannabisPlanting, 'nickname' | 'strainName' | 'seedDate'>,
+  formatDateFn?: (dateStr: string) => string,
+): string => {
+  const name = p.nickname || p.strainName;
+  const fmt = formatDateFn || formatDate;
+  return `${name} · ${fmt(p.seedDate)}`;
+};
+
+/** Convert a Date to a local-only date string (yyyy-MM-dd), avoiding UTC drift */
+export const toLocalIsoDate = (date: Date): string => format(date, 'yyyy-MM-dd');
+
+/** Convert a Date to a full ISO-8601 UTC timestamp (e.g. 2025-05-20T03:00:00.000Z) */
+export const toUtcTimestamp = (date: Date): string => date.toISOString();
+
+/** Format date to DD/MM/YYYY — parseISO auto-converts to local timezone */
 export const formatDate = (dateStr: string): string => {
   const date = parseISO(dateStr);
   if (!isValid(date)) return dateStr;
   return format(date, 'dd/MM/yyyy', { locale: ptBR });
 };
 
-/** Format date to "15 de maio de 2026" */
+/** Format date to "15 de maio de 2026" — parseISO auto-converts to local timezone */
 export const formatDateLong = (dateStr: string): string => {
   const date = parseISO(dateStr);
   if (!isValid(date)) return dateStr;
@@ -49,7 +65,8 @@ export const dateStatus = (dateStr: string, label: string): string => {
   return `${days} dias para ${label.toLowerCase()}`;
 };
 
-export const toCalendarDate = (date: Date): string => format(date, 'yyyy-MM-dd');
+/** Alias — same as toLocalIsoDate for calendar date strings */
+export const toCalendarDate = (date: Date): string => toLocalIsoDate(date);
 
 // ---- Cannabis growth stage calculations ----
 

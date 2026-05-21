@@ -61,6 +61,7 @@ export const createCannabisPlanting = (
   autoflowerDays: number | undefined,
   quantity: number = 1,
   notes: string = '',
+  nickname: string = '',
 ): CannabisPlanting => {
   const isAuto = floweringType === 'autoflower';
 
@@ -83,6 +84,7 @@ export const createCannabisPlanting = (
 
   return {
     id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
+    nickname: nickname.trim() || undefined,
     strainName,
     genetics,
     floweringType,

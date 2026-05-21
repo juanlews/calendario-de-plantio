@@ -4,11 +4,21 @@ import {
   Alert, ActivityIndicator,
 } from 'react-native';
 import { usePlants } from '../context/PlantContext';
-import { formatDate, daysRemaining, stageIcon, stageColor, stageLabel, daysInStage } from '../utils/dateUtils';
+import { formatDate, daysRemaining, stageIcon, stageColor, stageLabel, daysInStage, plantDisplayName as plantDisplayNameDefault, toLocalIsoDate } from '../utils/dateUtils';
+import { useSettings } from '../context/SettingsContext';
 import { getStrainInfo } from '../data/strains';
+import type { PlantDetailParamList } from './PlantDetailScreen';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-const PlantingsScreen = () => {
+type PlantingsNavProp = NativeStackNavigationProp<PlantDetailParamList, 'PlantDetail'>;
+
+const PlantingsScreen = ({ navigation }: { navigation: PlantingsNavProp }) => {
   const { plantings, loading, deletePlanting, updateStage } = usePlants();
+  const { formatDate: fmtDate, formatTime: fmtTime, settings } = useSettings();
+
+  // Helper wrappers so useMemo/useCallback deps are stable
+  const plantDisplayName = (p: Parameters<typeof plantDisplayNameDefault>[0]) =>
+    plantDisplayNameDefault(p, fmtDate);
 
   const sortedPlantings = useMemo(() => {
     return [...plantings].sort((a, b) => {
@@ -24,13 +34,14 @@ const PlantingsScreen = () => {
   }, [plantings]);
 
   const handleDelete = useCallback(
-    (id: string, name: string) => {
-      Alert.alert('Excluir planta', `Remover "${name}"?`, [
+    (id: string, plant: typeof plantings[0]) => {
+      const displayName = plantDisplayName(plant);
+      Alert.alert('Excluir planta', `Remover "${displayName}"?`, [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Excluir', style: 'destructive', onPress: () => deletePlanting(id) },
       ]);
     },
-    [deletePlanting],
+    [deletePlanting, fmtDate],
   );
 
   const handleAdvanceStage = useCallback(
@@ -40,7 +51,7 @@ const PlantingsScreen = () => {
           { text: 'Cancelar', style: 'cancel' },
           {
             text: 'Iniciar',
-            onPress: () => updateStage(id, new Date().toISOString().split('T')[0]),
+            onPress: () => updateStage(id, toLocalIsoDate(new Date())),
           },
         ]);
       } else if (currentStage === 'floração') {
@@ -48,7 +59,7 @@ const PlantingsScreen = () => {
           { text: 'Cancelar', style: 'cancel' },
           {
             text: 'Colher',
-            onPress: () => updateStage(id, undefined, new Date().toISOString().split('T')[0]),
+            onPress: () => updateStage(id, undefined, toLocalIsoDate(new Date())),
           },
         ]);
       }
@@ -73,7 +84,11 @@ const PlantingsScreen = () => {
     const canAdvance = stage === 'vegetativo' || stage === 'floração';
 
     return (
-      <View style={[styles.card, !isGrowing && styles.cardMuted]}>
+      <TouchableOpacity
+        style={[styles.card, !isGrowing && styles.cardMuted]}
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('PlantDetail', { plantingId: item.id })}>
+        {/* Inner content wrapped in Touchable */}
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -83,9 +98,9 @@ const PlantingsScreen = () => {
             <View style={[styles.typeBadge, { backgroundColor: item.floweringType === 'autoflower' ? '#E65100' : '#455A64' }]}>
               <Text style={styles.typeText}>{item.floweringType === 'autoflower' ? 'AUTO' : 'FOTO'}</Text>
             </View>
-            <Text style={styles.name}>{item.strainName}</Text>
+            <Text style={styles.name}>{plantDisplayName(item)}</Text>
           </View>
-          <TouchableOpacity onPress={() => handleDelete(item.id, item.strainName)} style={styles.delBtn}>
+          <TouchableOpacity onPress={() => handleDelete(item.id, item)} style={styles.delBtn}>
             <Text style={styles.delBtnText}>🗑️</Text>
           </TouchableOpacity>
         </View>
@@ -113,24 +128,24 @@ const PlantingsScreen = () => {
         <View style={styles.datesRow}>
           <View style={styles.dateCol}>
             <Text style={styles.dateLabel}>🌱 Semente</Text>
-            <Text style={styles.dateValue}>{formatDate(item.seedDate)}</Text>
+            <Text style={styles.dateValue}>{fmtDate(item.seedDate)}</Text>
           </View>
           {item.floweringDate && (
             <View style={styles.dateCol}>
               <Text style={styles.dateLabel}>🌺 Floração</Text>
-              <Text style={styles.dateValue}>{formatDate(item.floweringDate)}</Text>
+              <Text style={styles.dateValue}>{fmtDate(item.floweringDate)}</Text>
             </View>
           )}
           {item.harvestDate && (
             <View style={styles.dateCol}>
               <Text style={styles.dateLabel}>✂️ Colheita</Text>
-              <Text style={styles.dateValue}>{formatDate(item.harvestDate)}</Text>
+              <Text style={styles.dateValue}>{fmtDate(item.harvestDate)}</Text>
             </View>
           )}
           {!item.floweringDate && item.expectedHarvestDate && (
             <View style={styles.dateCol}>
               <Text style={styles.dateLabel}>📅 Est. colheita</Text>
-              <Text style={styles.dateValue}>{formatDate(item.expectedHarvestDate)}</Text>
+              <Text style={styles.dateValue}>{fmtDate(item.expectedHarvestDate)}</Text>
             </View>
           )}
         </View>
@@ -148,7 +163,7 @@ const PlantingsScreen = () => {
         )}
 
         {item.notes && <Text style={styles.notes}>📝 {item.notes}</Text>}
-      </View>
+      </TouchableOpacity>
     );
   };
 

@@ -8,11 +8,13 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { usePlants } from '../context/PlantContext';
 import { searchStrains, getStrainInfo } from '../data/strains';
 import type { StrainInfo, CannabisGenetics, FloweringType } from '../data/strains';
-import { addDaysToDate, formatDate } from '../utils/dateUtils';
+import { addDaysToDate, toLocalIsoDate } from '../utils/dateUtils';
+import { useSettings } from '../context/SettingsContext';
 import { createCannabisPlanting } from '../data/storage';
 
 const AddPlantingScreen = () => {
   const { addPlanting } = usePlants();
+  const { formatDate } = useSettings();
 
   // Strain selection
   const PAGE_SIZE = 30;
@@ -73,12 +75,13 @@ const AddPlantingScreen = () => {
   // Form fields
   const [seedDate, setSeedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [nickname, setNickname] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [notes, setNotes] = useState('');
 
   const harvestDatePreview = useMemo(() => {
     if (!selectedStrain) return null;
-    const seedDateStr = seedDate.toISOString().split('T')[0];
+    const seedDateStr = toLocalIsoDate(seedDate);
     if (selectedStrain.floweringType === 'autoflower' && selectedStrain.autoflowerDays) {
       return addDaysToDate(seedDateStr, selectedStrain.autoflowerDays);
     }
@@ -90,7 +93,7 @@ const AddPlantingScreen = () => {
       Alert.alert('Atenção', 'Selecione uma strain na lista.');
       return;
     }
-    const seedDateStr = seedDate.toISOString().split('T')[0];
+    const seedDateStr = toLocalIsoDate(seedDate);
     const qty = parseInt(quantity) || 1;
 
     const newPlanting = createCannabisPlanting(
@@ -102,6 +105,7 @@ const AddPlantingScreen = () => {
       selectedStrain.autoflowerDays,
       qty,
       notes.trim(),
+      nickname.trim(),
     );
 
     addPlanting(newPlanting);
@@ -111,6 +115,7 @@ const AddPlantingScreen = () => {
     setAllResults([]);
     setVisibleCount(0);
     setSeedDate(new Date());
+    setNickname('');
     setQuantity('1');
     setNotes('');
     setShowModal(false);
@@ -344,6 +349,17 @@ const AddPlantingScreen = () => {
           </View>
         )}
 
+        {/* Nickname */}
+        <Text style={styles.label}>🏷️ Apelido da planta (opcional)</Text>
+        <TextInput
+          style={styles.nicknameInput}
+          placeholder="Ex: Planta da janela, Armário 1, Mãe #3..."
+          placeholderTextColor="#999"
+          value={nickname}
+          onChangeText={setNickname}
+          maxLength={40}
+        />
+
         {/* Quantity */}
         <Text style={styles.label}>🌱 Quantidade de plantas</Text>
         <View style={styles.qtyRow}>
@@ -359,7 +375,7 @@ const AddPlantingScreen = () => {
         {/* Seed date */}
         <Text style={styles.label}>📅 Data da semente/germinação</Text>
         <TouchableOpacity style={styles.dateBtn} onPress={() => setShowDatePicker(true)}>
-          <Text style={styles.dateBtnText}>{formatDate(seedDate.toISOString().split('T')[0])}</Text>
+          <Text style={styles.dateBtnText}>{formatDate(toLocalIsoDate(seedDate))}</Text>
         </TouchableOpacity>
 
         {showDatePicker && (
@@ -378,12 +394,12 @@ const AddPlantingScreen = () => {
             <Text style={styles.previewTitle}>📋 Previsão</Text>
             <View style={styles.previewRow}>
               <Text style={styles.previewLabel}>Semeadura:</Text>
-              <Text style={styles.previewValue}>{formatDate(seedDate.toISOString().split('T')[0])}</Text>
+              <Text style={styles.previewValue}>{formatDate(toLocalIsoDate(seedDate))}</Text>
             </View>
             {selectedStrain.floweringType === 'photoperiodic' && (
               <View style={styles.previewRow}>
                 <Text style={styles.previewLabel}>Floração (est.):</Text>
-                <Text style={styles.previewValue}>{formatDate(addDaysToDate(seedDate.toISOString().split('T')[0], 30))}</Text>
+                <Text style={styles.previewValue}>{formatDate(addDaysToDate(toLocalIsoDate(seedDate), 30))}</Text>
               </View>
             )}
             <View style={styles.previewRow}>
@@ -432,6 +448,10 @@ const styles = StyleSheet.create({
   searchInput: {
     backgroundColor: '#fff', borderRadius: 10, padding: 14,
     borderWidth: 1, borderColor: '#ddd', minHeight: 56,
+  },
+  nicknameInput: {
+    backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 16,
+    borderWidth: 1, borderColor: '#ddd', color: '#333',
   },
   placeholder: { fontSize: 16, color: '#999' },
   selectedRow: { flexDirection: 'row', alignItems: 'center' },
