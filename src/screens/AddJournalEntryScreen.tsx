@@ -81,13 +81,13 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
         }
         if (selectedType === 'video') {
           result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+            mediaTypes: ['videos'],
             quality: 0.7,
             videoMaxDuration: 60,
           });
         } else {
           result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             quality: 0.8,
             allowsEditing: false,
           });
@@ -100,12 +100,12 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
         }
         if (selectedType === 'video') {
           result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+            mediaTypes: ['videos'],
             quality: 0.7,
           });
         } else {
           result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             quality: 0.8,
             allowsEditing: false,
           });
