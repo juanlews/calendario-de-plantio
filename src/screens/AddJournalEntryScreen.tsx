@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, ActivityIndicator, Platform,
+  TextInput, Alert, ActivityIndicator, Platform, Image,
 } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
+import { saveMediaToPlanting, deleteEntryMedia } from '../utils/mediaStorage';
 import TopHeader from '../components/TopHeader';
 
 // Helpers for web HTML date/time inputs
@@ -60,9 +62,75 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
   const [pruneMethod, setPruneMethod] = useState('');
   const [pruneDetails, setPruneDetails] = useState('');
 
+  // Media state
+  const [selectedMediaUri, setSelectedMediaUri] = useState<string | null>(null);
+  const [pickingMedia, setPickingMedia] = useState(false);
+
+  /** Request camera/gallery permission and pick media */
+  const pickMedia = async (useCamera: boolean) => {
+    if (selectedType !== 'photo' && selectedType !== 'video') return;
+
+    try {
+      let result: ImagePicker.ImagePickerResult | ImagePicker.ImagePickerResult;
+
+      if (useCamera) {
+        const cameraPerm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!cameraPerm.granted) {
+          Alert.alert('Permissão negada', 'Permita acesso à câmera nas configurações.');
+          return;
+        }
+        if (selectedType === 'video') {
+          result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+            quality: 0.7,
+            videoMaxDuration: 60,
+          });
+        } else {
+          result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.8,
+            allowsEditing: false,
+          });
+        }
+      } else {
+        const galleryPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!galleryPerm.granted) {
+          Alert.alert('Permissão negada', 'Permita acesso à galeria nas configurações.');
+          return;
+        }
+        if (selectedType === 'video') {
+          result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+            quality: 0.7,
+          });
+        } else {
+          result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.8,
+            allowsEditing: false,
+          });
+        }
+      }
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setSelectedMediaUri(result.assets[0].uri);
+      }
+    } catch (err) {
+      console.error('Erro ao selecionar mídia:', err);
+      Alert.alert('Erro', 'Não foi possível acessar a mídia.');
+    } finally {
+      setPickingMedia(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!selectedType) return;
 
+    // Photo/video: require media
+    if ((selectedType === 'photo' || selectedType === 'video') && !selectedMediaUri) {
+      Alert.alert('Erro', selectedType === 'photo' ? 'Selecione ou tire uma foto.' : 'Selecione ou grave um vídeo.');
+      return;
+    }
     if (selectedType === 'nutrition' && !nutProduct) {
       Alert.alert('Erro', 'Informe o produto utilizado');
       return;
@@ -78,9 +146,26 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
 
     setSaving(true);
 
+    // Generate entry ID upfront so we can use it for media storage
+    const entryId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+    // Move picked media to persistent storage
+    let mediaUri: string | undefined = selectedMediaUri || undefined;
+    if (mediaUri && (selectedType === 'photo' || selectedType === 'video')) {
+      try {
+        const mimeType = selectedType === 'video' ? 'video/mp4' : 'image/jpeg';
+        mediaUri = await saveMediaToPlanting(plantingId, entryId, mediaUri, mimeType);
+      } catch (err) {
+        console.error('Erro ao salvar mídia:', err);
+        // Continue without media rather than failing completely
+      }
+    }
+
     const entry = createJournalEntry(plantingId, selectedType, {
+      id: entryId,
       note: note || undefined,
       timestamp: entryDate.toISOString(),
+      mediaUri,
     });
 
     if (selectedType === 'watering') {
@@ -291,16 +376,54 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
         </View>
       )}
 
-      {/* ─── Photo / Video placeholder ─── */}
+      {/* ─── Photo / Video ─── */}
       {(selectedType === 'photo' || selectedType === 'video') && (
         <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
-          <TouchableOpacity style={[styles.mediaBtn, { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant }]}>
-            <Text style={styles.mediaBtnIcon}>{selectedType === 'photo' ? '📷' : '🎥'}</Text>
-            <Text style={[styles.mediaBtnText, { color: theme.colors.onSurfaceVariant }]}>
-              {selectedType === 'photo' ? 'Tirar foto ou selecionar' : 'Gravar ou selecionar vídeo'}
-            </Text>
-          </TouchableOpacity>
-          <Text style={[styles.mediaHint, { color: theme.colors.outline }]}>Câmera/galeria será implementada com expo-image-picker</Text>
+          {selectedMediaUri ? (
+            <View>
+              {selectedType === 'photo' ? (
+                <Image
+                  source={{ uri: selectedMediaUri }}
+                  style={styles.mediaPreview}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.videoPreview, { backgroundColor: theme.colors.elevation.level1 }]}>
+                  <Text style={{ fontSize: 48 }}>🎥</Text>
+                  <Text style={[styles.videoPreviewText, { color: theme.colors.onSurfaceVariant }]}>Vídeo selecionado</Text>
+                </View>
+              )}
+              <TouchableOpacity
+                style={[styles.mediaRemoveBtn, { backgroundColor: theme.colors.errorContainer }]}
+                onPress={() => setSelectedMediaUri(null)}
+              >
+                <Text style={[styles.mediaRemoveText, { color: theme.colors.onErrorContainer }]}>✕ Remover</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={[styles.mediaBtn, { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.primary, marginBottom: 10 }]}
+                onPress={() => { setPickingMedia(true); pickMedia(true); }}
+                disabled={pickingMedia}
+              >
+                <Text style={styles.mediaBtnIcon}>{selectedType === 'photo' ? '📷' : '🎥'}</Text>
+                <Text style={[styles.mediaBtnText, { color: theme.colors.primary }]}>
+                  {selectedType === 'photo' ? 'Tirar foto' : 'Gravar vídeo'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.mediaBtn, { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant }]}
+                onPress={() => { setPickingMedia(true); pickMedia(false); }}
+                disabled={pickingMedia}
+              >
+                <Text style={styles.mediaBtnIcon}>🖼️</Text>
+                <Text style={[styles.mediaBtnText, { color: theme.colors.onSurfaceVariant }]}>
+                  {selectedType === 'photo' ? 'Selecionar da galeria' : 'Selecionar vídeo'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       )}
 
@@ -433,8 +556,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mediaBtnIcon: { fontSize: 40, marginBottom: 8 },
-  mediaBtnText: { fontSize: 14 },
+  mediaBtnText: { fontSize: 14, fontWeight: '600' },
   mediaHint: { fontSize: 11, textAlign: 'center' as const, marginTop: 6 },
+  mediaPreview: {
+    width: '100%', height: 250, borderRadius: 12, marginBottom: 10,
+  },
+  videoPreview: {
+    width: '100%', height: 180, borderRadius: 12, marginBottom: 10,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  videoPreviewText: { fontSize: 14, marginTop: 8 },
+  mediaRemoveBtn: {
+    alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 10,
+    borderRadius: 20,
+  },
+  mediaRemoveText: { fontSize: 14, fontWeight: '600' },
 
   saveBtn: { margin: 16, padding: 16, borderRadius: 12, alignItems: 'center' },
   saveBtnDisabled: { opacity: 0.6 },

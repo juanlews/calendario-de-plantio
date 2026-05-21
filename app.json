@@ -29,7 +29,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O app precisa acessar suas fotos para registrar o crescimento das plantas.",
+          "cameraPermission": "O app precisa acessar a câmera para tirar fotos dos seus plantios."
+        }
+      ]
     ]
   }
 }
