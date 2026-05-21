@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { CannabisPlanting, CannabisGenetics, FloweringType } from '../types/planting';
+import type { CannabisPlanting, CannabisGenetics, FloweringType, GrowthStage } from '../types/planting';
 import { getStrainInfo } from '../data/strains';
 import { calculateStage, addDaysToDate } from '../utils/dateUtils';
 
@@ -62,6 +62,7 @@ export const createCannabisPlanting = (
   quantity: number = 1,
   notes: string = '',
   nickname: string = '',
+  initialStage?: GrowthStage,
 ): CannabisPlanting => {
   const isAuto = floweringType === 'autoflower';
 
@@ -80,7 +81,7 @@ export const createCannabisPlanting = (
     expectedHarvestDate = addDaysToDate(seedDate, 30 + floweringDays);
   }
 
-  const stage = calculateStage(seedDate, null, null, floweringDays, floweringType);
+  const stage = initialStage ?? calculateStage(seedDate, null, null, floweringDays, floweringType);
 
   return {
     id: Date.now().toString() + Math.random().toString(36).slice(2, 7),

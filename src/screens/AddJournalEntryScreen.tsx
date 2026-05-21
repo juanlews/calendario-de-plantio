@@ -3,7 +3,19 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, Platform,
 } from 'react-native';
+import { useTheme } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import TopHeader from '../components/TopHeader';
+
+// Helpers for web HTML date/time inputs
+const toIsoDateString = (d: Date) => d.toISOString().slice(0, 10);
+const toIsoTimeString = (d: Date) => d.toTimeString().slice(0, 5);
+const fromIsoDateAndTime = (dateStr: string, timeStr: string) => {
+  const [h, m] = timeStr.split(':').map(Number);
+  const dt = new Date(dateStr + 'T00:00:00');
+  dt.setHours(h, m);
+  return dt;
+};
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { PlantDetailParamList } from './PlantDetailScreen';
 import type { JournalEntryType, WateringData, NutritionData, PruningData } from '../types/planting';
@@ -26,35 +38,31 @@ const WATERING_METHODS = ['Manual', 'Gotejamento', 'Inundação', 'Regador', 'Ou
 
 const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
   const { plantingId, entryType } = route.params;
+  const theme = useTheme();
   const [selectedType, setSelectedType] = useState<JournalEntryType | null>(entryType ?? null);
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
-  // Data/hora do registro (permite datas passadas)
   const [entryDate, setEntryDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  // Watering fields
   const [waterVol, setWaterVol] = useState('');
   const [waterPh, setWaterPh] = useState('');
   const [waterMethod, setWaterMethod] = useState('');
   const [waterRunoff, setWaterRunoff] = useState(false);
 
-  // Nutrition fields
   const [nutProduct, setNutProduct] = useState('');
   const [nutDose, setNutDose] = useState('');
   const [nutPh, setNutPh] = useState('');
   const [nutEc, setNutEc] = useState('');
   const [nutType, setNutType] = useState('');
 
-  // Pruning fields
   const [pruneMethod, setPruneMethod] = useState('');
   const [pruneDetails, setPruneDetails] = useState('');
 
   const handleSave = async () => {
     if (!selectedType) return;
 
-    // Validate required fields
     if (selectedType === 'nutrition' && !nutProduct) {
       Alert.alert('Erro', 'Informe o produto utilizado');
       return;
@@ -106,20 +114,28 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
     navigation.goBack();
   };
 
+  const webInputStyle: React.CSSProperties = {
+    flex: 1, padding: '12px', fontSize: 14, borderRadius: 10,
+    border: `1px solid ${theme.colors.outlineVariant}`,
+    backgroundColor: theme.colors.elevation.level1,
+    color: theme.colors.onSurface,
+    fontFamily: 'inherit', boxSizing: 'border-box' as const,
+  };
+
   if (!selectedType) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Que tipo de registro?</Text>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <Text style={[styles.title, { color: theme.colors.onSurface }]}>Que tipo de registro?</Text>
         <View style={styles.typeGrid}>
           {ENTRY_TYPES.map((item) => (
             <TouchableOpacity
               key={item.type}
-              style={[styles.typeCard, { borderColor: item.color + '33' }]}
+              style={[styles.typeCard, { borderColor: item.color + '33', backgroundColor: theme.colors.surface }]}
               onPress={() => setSelectedType(item.type)}
             >
               <Text style={styles.typeIcon}>{item.icon}</Text>
               <Text style={[styles.typeLabel, { color: item.color }]}>{item.label}</Text>
-              <Text style={styles.typeDesc}>{item.desc}</Text>
+              <Text style={[styles.typeDesc, { color: theme.colors.onSurfaceVariant }]}>{item.desc}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -130,46 +146,75 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
   const config = ENTRY_TYPES.find((e) => e.type === selectedType)!;
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.typeHeader}>
+    <View style={{ flex: 1 }}>
+      <TopHeader title={config.label} showBack onBack={() => navigation.goBack()} />
+      <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.typeHeader, { backgroundColor: theme.colors.surface }]}>
         <Text style={styles.typeHeaderIcon}>{config.icon}</Text>
         <Text style={[styles.typeHeaderLabel, { color: config.color }]}>{config.label}</Text>
       </View>
 
       {/* ─── Date/Time ─── */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Data e hora do registro</Text>
-        <View style={styles.dateTimeRow}>
-          <TouchableOpacity
-            style={styles.dateTimeBtn}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Text style={styles.dateTimeIcon}>📅</Text>
-            <Text style={styles.dateTimeText}>
-              {entryDate.toLocaleDateString('pt-BR')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.dateTimeBtn}
-            onPress={() => setShowTimePicker(true)}
-          >
-            <Text style={styles.dateTimeIcon}>🕐</Text>
-            <Text style={styles.dateTimeText}>
-              {entryDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.dateTimeHint}>
+      <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>Data e hora do registro</Text>
+        {Platform.OS === 'web' ? (
+          <View style={styles.dateTimeRow}>
+            <input
+              type="date"
+              value={toIsoDateString(entryDate)}
+              max={toIsoDateString(new Date())}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setEntryDate(fromIsoDateAndTime(e.target.value, toIsoTimeString(entryDate)));
+                }
+              }}
+              style={webInputStyle}
+            />
+            <input
+              type="time"
+              value={toIsoTimeString(entryDate)}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setEntryDate(fromIsoDateAndTime(toIsoDateString(entryDate), e.target.value));
+                }
+              }}
+              style={webInputStyle}
+            />
+          </View>
+        ) : (
+          <View style={styles.dateTimeRow}>
+            <TouchableOpacity
+              style={[styles.dateTimeBtn, { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant }]}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={styles.dateTimeIcon}>🗓️</Text>
+              <Text style={[styles.dateTimeText, { color: theme.colors.onSurface }]}>
+                {entryDate.toLocaleDateString('pt-BR')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.dateTimeBtn, { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant }]}
+              onPress={() => setShowTimePicker(true)}
+            >
+              <Text style={styles.dateTimeIcon}>🕐</Text>
+              <Text style={[styles.dateTimeText, { color: theme.colors.onSurface }]}>
+                {entryDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        <Text style={[styles.dateTimeHint, { color: theme.colors.outline }]}>
           Permite registrar eventos passados caso tenha esquecido
         </Text>
       </View>
 
       {/* ─── Note (common to all) ─── */}
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Nota / Observação (opcional)</Text>
+      <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>Nota / Observação (opcional)</Text>
         <TextInput
-          style={styles.textArea}
+          style={[styles.textArea, { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant, color: theme.colors.onSurface }]}
           placeholder="Ex: planta respondendo bem, folhas amarelando..."
+          placeholderTextColor={theme.colors.onSurfaceVariant}
           value={note}
           onChangeText={setNote}
           multiline
@@ -177,8 +222,8 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
         />
       </View>
 
-      {/* ─── Date Picker ─── */}
-      {showDatePicker && (
+      {/* ─── Date/Time Pickers (native only) ─── */}
+      {Platform.OS !== 'web' && showDatePicker && (
         <DateTimePicker
           value={entryDate}
           mode="date"
@@ -190,9 +235,7 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
           }}
         />
       )}
-
-      {/* ─── Time Picker ─── */}
-      {showTimePicker && (
+      {Platform.OS !== 'web' && showTimePicker && (
         <DateTimePicker
           value={entryDate}
           mode="time"
@@ -210,96 +253,97 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
 
       {/* ─── Watering ─── */}
       {selectedType === 'watering' && (
-        <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Detalhes da rega</Text>
-          <NumberInput label="Volume (ml)" value={waterVol} onChange={setWaterVol} placeholder="500" />
-          <NumberInput label="pH da água" value={waterPh} onChange={setWaterPh} placeholder="6.5" decimal />
-          <Text style={styles.subLabel}>Método de rega:</Text>
-          <OptionButtons options={WATERING_METHODS} selected={waterMethod} onSelect={setWaterMethod} />
+        <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>Detalhes da rega</Text>
+          <NumberInput label="Volume (ml)" value={waterVol} onChange={setWaterVol} placeholder="500" theme={theme} />
+          <NumberInput label="pH da água" value={waterPh} onChange={setWaterPh} placeholder="6.5" decimal theme={theme} />
+          <Text style={[styles.subLabel, { color: theme.colors.onSurfaceVariant }]}>Método de rega:</Text>
+          <OptionButtons options={WATERING_METHODS} selected={waterMethod} onSelect={setWaterMethod} theme={theme} />
           <TouchableOpacity
-            style={[styles.checkbox, waterRunoff && styles.checkboxActive]}
+            style={[styles.checkbox, { borderColor: theme.colors.outlineVariant }, waterRunoff && { backgroundColor: theme.colors.primaryContainer }]}
             onPress={() => setWaterRunoff(!waterRunoff)}
           >
-            <Text style={styles.checkboxText}>{waterRunoff ? '☑️' : '⬜'} Runoff (escoamento)</Text>
+            <Text style={[styles.checkboxText, { color: theme.colors.onSurface }]}>{waterRunoff ? '☑️' : '⬜'} Runoff (escoamento)</Text>
           </TouchableOpacity>
         </View>
       )}
 
       {/* ─── Nutrition ─── */}
       {selectedType === 'nutrition' && (
-        <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Detalhes da nutrição</Text>
-          <FieldInput label="Produto *" value={nutProduct} onChange={setNutProduct} placeholder="Ex: BioGrow, Cal-Mag..." />
-          <NumberInput label="Dose (ml/L) *" value={nutDose} onChange={setNutDose} placeholder="2" decimal />
-          <NumberInput label="pH da solução" value={nutPh} onChange={setNutPh} placeholder="6.0" decimal />
-          <NumberInput label="EC (mS/cm)" value={nutEc} onChange={setNutEc} placeholder="1.2" decimal />
-          <Text style={styles.subLabel}>Tipo:</Text>
-          <OptionButtons options={NUTRITION_TYPES} selected={nutType} onSelect={setNutType} />
+        <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>Detalhes da nutrição</Text>
+          <FieldInput label="Produto *" value={nutProduct} onChange={setNutProduct} placeholder="Ex: BioGrow, Cal-Mag..." theme={theme} />
+          <NumberInput label="Dose (ml/L) *" value={nutDose} onChange={setNutDose} placeholder="2" decimal theme={theme} />
+          <NumberInput label="pH da solução" value={nutPh} onChange={setNutPh} placeholder="6.0" decimal theme={theme} />
+          <NumberInput label="EC (mS/cm)" value={nutEc} onChange={setNutEc} placeholder="1.2" decimal theme={theme} />
+          <Text style={[styles.subLabel, { color: theme.colors.onSurfaceVariant }]}>Tipo:</Text>
+          <OptionButtons options={NUTRITION_TYPES} selected={nutType} onSelect={setNutType} theme={theme} />
         </View>
       )}
 
       {/* ─── Pruning ─── */}
       {selectedType === 'pruning' && (
-        <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Detalhes da poda</Text>
-          <Text style={styles.subLabel}>Método *:</Text>
-          <OptionButtons options={PRUNING_METHODS} selected={pruneMethod} onSelect={setPruneMethod} />
-          <FieldInput label="Detalhes" value={pruneDetails} onChange={setPruneDetails} placeholder="Ex: removi 30% das folhas baixas..." multiline />
+        <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>Detalhes da poda</Text>
+          <Text style={[styles.subLabel, { color: theme.colors.onSurfaceVariant }]}>Método *:</Text>
+          <OptionButtons options={PRUNING_METHODS} selected={pruneMethod} onSelect={setPruneMethod} theme={theme} />
+          <FieldInput label="Detalhes" value={pruneDetails} onChange={setPruneDetails} placeholder="Ex: removi 30% das folhas baixas..." multiline theme={theme} />
         </View>
       )}
 
       {/* ─── Photo / Video placeholder ─── */}
       {(selectedType === 'photo' || selectedType === 'video') && (
-        <View style={styles.fieldGroup}>
-          <TouchableOpacity style={styles.mediaBtn}>
+        <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
+          <TouchableOpacity style={[styles.mediaBtn, { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant }]}>
             <Text style={styles.mediaBtnIcon}>{selectedType === 'photo' ? '📷' : '🎥'}</Text>
-            <Text style={styles.mediaBtnText}>
+            <Text style={[styles.mediaBtnText, { color: theme.colors.onSurfaceVariant }]}>
               {selectedType === 'photo' ? 'Tirar foto ou selecionar' : 'Gravar ou selecionar vídeo'}
             </Text>
           </TouchableOpacity>
-          <Text style={styles.mediaHint}>Câmera/galeria será implementada com expo-image-picker</Text>
+          <Text style={[styles.mediaHint, { color: theme.colors.outline }]}>Câmera/galeria será implementada com expo-image-picker</Text>
         </View>
       )}
 
       {/* ─── Save ─── */}
       <TouchableOpacity
-        style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+        style={[styles.saveBtn, { backgroundColor: theme.colors.primary }, saving && styles.saveBtnDisabled]}
         onPress={handleSave}
         disabled={saving}
       >
         {saving ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={theme.colors.onPrimary} />
         ) : (
-          <Text style={styles.saveText}>💾 Salvar registro</Text>
+          <Text style={[styles.saveText, { color: theme.colors.onPrimary }]}>💾 Salvar registro</Text>
         )}
       </TouchableOpacity>
       {!entryType && (
         <TouchableOpacity style={styles.cancelBtn} onPress={() => setSelectedType(null)}>
-          <Text style={styles.cancelText}>← Voltar aos tipos</Text>
+          <Text style={[styles.cancelText, { color: theme.colors.onSurfaceVariant }]}>← Voltar aos tipos</Text>
         </TouchableOpacity>
       )}
       {entryType && (
         <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.cancelText}>✕ Cancelar</Text>
+          <Text style={[styles.cancelText, { color: theme.colors.onSurfaceVariant }]}>✕ Cancelar</Text>
         </TouchableOpacity>
       )}
     </ScrollView>
+    </View>
   );
 };
 
 // ─── Sub-components ───
 
 const FieldInput: React.FC<{
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; multiline?: boolean;
-}> = ({ label, value, onChange, placeholder, multiline }) => (
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; multiline?: boolean; theme: any;
+}> = ({ label, value, onChange, placeholder, multiline, theme }) => (
   <View style={styles.inputWrap}>
-    <Text style={styles.inputLabel}>{label}</Text>
+    <Text style={[styles.inputLabel, { color: theme.colors.onSurfaceVariant }]}>{label}</Text>
     <TextInput
-      style={[styles.input, multiline && styles.textArea]}
+      style={[styles.input, { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant, color: theme.colors.onSurface }, multiline && styles.textArea]}
       value={value}
       onChangeText={onChange}
       placeholder={placeholder}
-      placeholderTextColor="#ccc"
+      placeholderTextColor={theme.colors.onSurfaceVariant}
       multiline={multiline}
       numberOfLines={multiline ? 3 : 1}
     />
@@ -307,101 +351,105 @@ const FieldInput: React.FC<{
 );
 
 const NumberInput: React.FC<{
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; decimal?: boolean;
-}> = ({ label, value, onChange, placeholder }) => (
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; decimal?: boolean; theme: any;
+}> = ({ label, value, onChange, placeholder, theme }) => (
   <View style={styles.inputWrap}>
-    <Text style={styles.inputLabel}>{label}</Text>
+    <Text style={[styles.inputLabel, { color: theme.colors.onSurfaceVariant }]}>{label}</Text>
     <TextInput
-      style={styles.input}
+      style={[styles.input, { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant, color: theme.colors.onSurface }]}
       value={value}
       onChangeText={onChange}
       placeholder={placeholder}
-      placeholderTextColor="#ccc"
+      placeholderTextColor={theme.colors.onSurfaceVariant}
       keyboardType="numeric"
     />
   </View>
 );
 
 const OptionButtons: React.FC<{
-  options: string[]; selected: string; onSelect: (v: string) => void;
-}> = ({ options, selected, onSelect }) => (
+  options: string[]; selected: string; onSelect: (v: string) => void; theme: any;
+}> = ({ options, selected, onSelect, theme }) => (
   <View style={styles.optionsRow}>
     {options.map((opt) => (
       <TouchableOpacity
         key={opt}
-        style={[styles.optionBtn, opt === selected && styles.optionBtnActive]}
+        style={[
+          styles.optionBtn,
+          { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant },
+          opt === selected && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+        ]}
         onPress={() => onSelect(opt === selected ? '' : opt)}
       >
-        <Text style={[styles.optionText, opt === selected && styles.optionTextActive]}>{opt}</Text>
+        <Text style={[
+          styles.optionText,
+          { color: theme.colors.onSurfaceVariant },
+          opt === selected && { color: theme.colors.onPrimary },
+        ]}>{opt}</Text>
       </TouchableOpacity>
     ))}
   </View>
 );
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  title: { fontSize: 20, fontWeight: '700', color: '#1a1a1a', padding: 16, textAlign: 'center' },
+  container: { flex: 1 },
+  title: { fontSize: 20, fontWeight: '700', padding: 16, textAlign: 'center' },
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 10, justifyContent: 'center' },
   typeCard: {
-    width: '45%', padding: 16, borderRadius: 12, backgroundColor: '#fff',
+    width: '45%', padding: 16, borderRadius: 12,
     borderWidth: 1, alignItems: 'center',
   },
   typeIcon: { fontSize: 32, marginBottom: 6 },
   typeLabel: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  typeDesc: { fontSize: 11, color: '#888', textAlign: 'center' },
+  typeDesc: { fontSize: 11, textAlign: 'center' },
 
-  typeHeader: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff', gap: 10 },
+  typeHeader: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 10 },
   typeHeaderIcon: { fontSize: 28 },
   typeHeaderLabel: { fontSize: 20, fontWeight: '700' },
 
-  fieldGroup: { backgroundColor: '#fff', padding: 16, marginTop: 1 },
-  fieldLabel: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 10 },
-  subLabel: { fontSize: 12, color: '#666', marginBottom: 6, marginTop: 10 },
+  fieldGroup: { padding: 16, marginTop: 1 },
+  fieldLabel: { fontSize: 14, fontWeight: '600', marginBottom: 10 },
+  subLabel: { fontSize: 12, marginBottom: 6, marginTop: 10 },
   inputWrap: { marginBottom: 10 },
-  inputLabel: { fontSize: 12, color: '#666', marginBottom: 4 },
+  inputLabel: { fontSize: 12, marginBottom: 4 },
   input: {
-    borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 10,
-    fontSize: 15, backgroundColor: '#fafafa',
+    borderWidth: 1, borderRadius: 8, padding: 10,
+    fontSize: 15,
   },
-  textArea: { minHeight: 80, textAlignVertical: 'top' },
+  textArea: { minHeight: 80, textAlignVertical: 'top' as const },
 
   optionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   optionBtn: {
     paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
-    backgroundColor: '#f0f0f0', borderWidth: 1, borderColor: '#e0e0e0',
+    borderWidth: 1,
   },
-  optionBtnActive: { backgroundColor: '#2e7d32', borderColor: '#2e7d32' },
-  optionText: { fontSize: 12, color: '#555', fontWeight: '500' },
-  optionTextActive: { color: '#fff', fontWeight: '600' },
+  optionText: { fontSize: 12, fontWeight: '500' },
 
-  checkbox: { padding: 10, marginTop: 8, flexDirection: 'row', alignItems: 'center' },
-  checkboxActive: { backgroundColor: '#e8f5e9', borderRadius: 8 },
-  checkboxText: { fontSize: 14, color: '#333' },
+  checkbox: { padding: 10, marginTop: 8, flexDirection: 'row', alignItems: 'center', borderRadius: 8, borderWidth: 1 },
+  checkboxText: { fontSize: 14 },
 
   mediaBtn: {
-    padding: 20, borderRadius: 12, backgroundColor: '#f8f8f8',
-    borderWidth: 2, borderColor: '#e0e0e0', borderStyle: 'dashed',
+    padding: 20, borderRadius: 12,
+    borderWidth: 2, borderStyle: 'dashed' as const,
     alignItems: 'center',
   },
   mediaBtnIcon: { fontSize: 40, marginBottom: 8 },
-  mediaBtnText: { fontSize: 14, color: '#666' },
-  mediaHint: { fontSize: 11, color: '#bbb', textAlign: 'center', marginTop: 6 },
+  mediaBtnText: { fontSize: 14 },
+  mediaHint: { fontSize: 11, textAlign: 'center' as const, marginTop: 6 },
 
-  saveBtn: { margin: 16, padding: 16, borderRadius: 12, backgroundColor: '#2e7d32', alignItems: 'center' },
+  saveBtn: { margin: 16, padding: 16, borderRadius: 12, alignItems: 'center' },
   saveBtnDisabled: { opacity: 0.6 },
-  saveText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  saveText: { fontSize: 16, fontWeight: '700' },
   cancelBtn: { padding: 16, alignItems: 'center', marginBottom: 30 },
-  cancelText: { fontSize: 14, color: '#999' },
+  cancelText: { fontSize: 14 },
 
   dateTimeRow: { flexDirection: 'row', gap: 10, marginBottom: 4 },
   dateTimeBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
-    padding: 12, borderRadius: 10, backgroundColor: '#f8f9fa',
-    borderWidth: 1, borderColor: '#e0e0e0',
+    padding: 12, borderRadius: 10, borderWidth: 1,
   },
   dateTimeIcon: { fontSize: 16, marginRight: 8 },
-  dateTimeText: { fontSize: 14, color: '#333', fontWeight: '500' },
-  dateTimeHint: { fontSize: 11, color: '#999', fontStyle: 'italic', marginTop: 4 },
+  dateTimeText: { fontSize: 14, fontWeight: '500' },
+  dateTimeHint: { fontSize: 11, fontStyle: 'italic' as const, marginTop: 4 },
 });
 
 export default AddJournalEntryScreen;

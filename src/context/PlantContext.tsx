@@ -10,6 +10,7 @@ interface PlantContextValue {
   updatePlanting: (p: CannabisPlanting) => void;
   deletePlanting: (id: string) => void;
   updateStage: (id: string, floweringDate?: string, harvestDate?: string) => void;
+  updateCurrentStage: (id: string, stage: CannabisPlanting['currentStage']) => void;
 }
 
 const PlantContext = createContext<PlantContextValue | undefined>(undefined);
@@ -59,6 +60,17 @@ export const PlantProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   }, []);
 
+  const updateCurrentStage = useCallback((id: string, stage: CannabisPlanting['currentStage']) => {
+    setPlantings((prev) => {
+      const updated = prev.map((p) => {
+        if (p.id !== id) return p;
+        return { ...p, currentStage: stage };
+      });
+      savePlantings(updated);
+      return updated;
+    });
+  }, []);
+
   const value = useMemo(
     () => ({
       plantings,
@@ -67,8 +79,9 @@ export const PlantProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updatePlanting,
       deletePlanting: deletePlantingFn,
       updateStage,
+      updateCurrentStage,
     }),
-    [plantings, loading, addPlanting, updatePlanting, deletePlantingFn, updateStage],
+    [plantings, loading, addPlanting, updatePlanting, deletePlantingFn, updateStage, updateCurrentStage],
   );
 
   return <PlantContext.Provider value={value}>{children}</PlantContext.Provider>;

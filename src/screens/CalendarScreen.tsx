@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Alert, ActivityIndicator,
 } from 'react-native';
+import { useTheme } from 'react-native-paper';
 import { Calendar, type DateData } from 'react-native-calendars';
 import { format, parseISO, isValid, addDays, isBefore, eachDayOfInterval, startOfDay } from 'date-fns';
 import { usePlants } from '../context/PlantContext';
@@ -10,6 +11,7 @@ import { useSettings } from '../context/SettingsContext';
 import { formatDate as formatDateDefault, daysRemaining, dateStatus, stageIcon, stageColor, stageLabel, plantDisplayName as plantDisplayNameDefault } from '../utils/dateUtils';
 import { loadAllJournalEntries } from '../data/journalStorage';
 import type { PlantJournalEntry, GrowthStage } from '../types/planting';
+import TopHeader from '../components/TopHeader';
 
 // ─── GrowthStage config ───
 const STAGE_CONFIG: Record<GrowthStage, { icon: string; label: string; color: string }> = {
@@ -53,6 +55,7 @@ const ENTRY_TO_DOT: Record<string, { key: string; color: string }> = {
 const CalendarScreen = () => {
   const { plantings, loading, updateStage, deletePlanting } = usePlants();
   const { formatDate: fmtDate, formatTime: fmtTime } = useSettings();
+  const theme = useTheme();
   const plantDisplayName = (p: Parameters<typeof plantDisplayNameDefault>[0]) =>
     plantDisplayNameDefault(p, fmtDate);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -170,15 +173,16 @@ const CalendarScreen = () => {
 
     // Today highlight
     const todayISO = format(todayDate, 'yyyy-MM-dd');
+    const todaySelectedColor = theme.colors.primary;
     if (marks[todayISO]) {
       marks[todayISO].selected = true;
-      marks[todayISO].selectedColor = '#2e7d32';
+      marks[todayISO].selectedColor = todaySelectedColor;
     } else {
-      marks[todayISO] = { selected: true, selectedColor: '#2e7d32', dots: [] };
+      marks[todayISO] = { selected: true, selectedColor: todaySelectedColor, dots: [] };
     }
 
     return marks;
-  }, [plantings, journalEntries]);
+  }, [plantings, journalEntries, theme.colors.primary]);
 
   // Selected day: events grouped by plant
   const selectedDayByPlant = useMemo(() => {
@@ -274,7 +278,7 @@ const CalendarScreen = () => {
   }, [deletePlanting, fmtDate]);
 
   if (loading || journalLoading) {
-    return <View style={styles.loading}><ActivityIndicator size="large" color="#2e7d32" /></View>;
+    return <View style={[styles.loading, { backgroundColor: theme.colors.background }]}><ActivityIndicator size="large" color={theme.colors.primary} /></View>;
   }
 
   // Legend simplificada — categorias agrupadas
@@ -295,25 +299,26 @@ const CalendarScreen = () => {
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <TopHeader title="Calendário" />
       <Calendar
+        key={`${theme.dark ? 'd' : 'l'}-${theme.colors.primary}`}
         onDayPress={handleDayPress}
         markedDates={markedDates}
         markingType="multi-dot"
         theme={{
-          backgroundColor: '#fff',
-          calendarBackground: '#fff',
-          textSectionTitleColor: '#666',
-          selectedDayBackgroundColor: '#2e7d32',
-          selectedDayTextColor: '#fff',
-          todayTextColor: '#2e7d32',
-          dayTextColor: '#333',
-          textDisabledColor: '#ddd',
-          dotColor: '#2e7d32',
-          selectedDotColor: '#fff',
-          arrowColor: '#2e7d32',
-          monthTextColor: '#2e7d32',
-          textDayFontWeight: '400',
+          backgroundColor: theme.colors.surface,
+          calendarBackground: theme.colors.surface,
+          textSectionTitleColor: theme.colors.onSurfaceVariant,
+          selectedDayBackgroundColor: theme.colors.primary,
+          selectedDayTextColor: theme.colors.onPrimary,
+          todayTextColor: theme.colors.primary,
+          dayTextColor: theme.colors.onSurface,
+          textDisabledColor: theme.colors.onSurfaceDisabled ?? '#ddd',
+          dotColor: theme.colors.primary,
+          selectedDotColor: theme.colors.onPrimary,
+          arrowColor: theme.colors.primary,
+          monthTextColor: theme.colors.onSurface,
           textMonthFontWeight: 'bold',
           textDayHeaderFontWeight: '600',
           textDayFontSize: 16,
@@ -324,44 +329,44 @@ const CalendarScreen = () => {
       />
 
       {/* Legend — grouped categories */}
-      <View style={styles.legend}>
+      <View style={[styles.legend, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant }]}>
         <View style={styles.legendGroup}>
-          <Text style={styles.legendGroupTitle}>Estágios</Text>
+          <Text style={[styles.legendGroupTitle, { color: theme.colors.onSurfaceVariant }]}>Estágios</Text>
           <View style={styles.legendRow}>
             {legendItems.slice(0, 8).map((item) => (
               <View key={item.label} style={styles.legendChip}>
                 <Text style={{ fontSize: 11 }}>{item.icon}</Text>
                 <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-                <Text style={styles.legendText}>{item.label}</Text>
+                <Text style={[styles.legendText, { color: theme.colors.onSurfaceVariant }]}>{item.label}</Text>
               </View>
             ))}
           </View>
         </View>
         <View style={styles.legendGroup}>
-          <Text style={styles.legendGroupTitle}>Registros</Text>
+          <Text style={[styles.legendGroupTitle, { color: theme.colors.onSurfaceVariant }]}>Registros</Text>
           <View style={styles.legendRow}>
             {legendItems.slice(8).map((item) => (
               <View key={item.label} style={styles.legendChip}>
                 <Text style={{ fontSize: 11 }}>{item.icon}</Text>
                 <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-                <Text style={styles.legendText}>{item.label}</Text>
+                <Text style={[styles.legendText, { color: theme.colors.onSurfaceVariant }]}>{item.label}</Text>
               </View>
             ))}
           </View>
         </View>
       </View>
 
-      <ScrollView style={styles.details}>
+      <ScrollView style={[styles.details, { backgroundColor: theme.colors.background }]}>
         {/* Selected day — grouped by plant */}
         {selectedDate && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📅 {fmtDate(selectedDate)}</Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>🗓️ {fmtDate(selectedDate)}</Text>
             {selectedDayByPlant.length === 0 ? (
-              <Text style={styles.emptyText}>Nenhum evento nesta data</Text>
+              <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Nenhum evento nesta data</Text>
             ) : (
               selectedDayByPlant.map((group) => (
-                <View key={group.plantingId} style={styles.plantCard}>
-                  <Text style={styles.plantCardTitle}>{group.displayName}</Text>
+                <View key={group.plantingId} style={[styles.plantCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
+                  <Text style={[styles.plantCardTitle, { color: theme.colors.primary }]}>{group.displayName}</Text>
                   {group.events.map((evt, i) => (
                     <View key={i} style={styles.eventRow}>
                       <View style={[styles.eventIconWrap, { backgroundColor: evt.color + '18' }]}>
@@ -386,21 +391,21 @@ const CalendarScreen = () => {
 
         {/* Upcoming */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>
             📋 Próximos 45 dias ({upcomingEvents.length} eventos)
           </Text>
           {upcomingEvents.length === 0 ? (
-            <Text style={styles.emptyText}>Nenhum evento próximo</Text>
+            <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Nenhum evento próximo</Text>
           ) : (
             upcomingEvents.map((evt, i) => (
-              <View key={`${evt.plantName}-${evt.label}-${i}`} style={styles.upcomingItem}>
+              <View key={`${evt.plantName}-${evt.label}-${i}`} style={[styles.upcomingItem, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
                 <View style={[styles.upcomingBadge, { backgroundColor: evt.color + '18' }]}>
                   <Text style={[styles.upcomingBadgeText, { color: evt.color }]}>
                     {evt.icon} {evt.label.toUpperCase()}
                   </Text>
                 </View>
-                <Text style={styles.upcomingName}>{evt.plantName}</Text>
-                <Text style={styles.upcomingDays}>
+                <Text style={[styles.upcomingName, { color: theme.colors.onSurface }]}>{evt.plantName}</Text>
+                <Text style={[styles.upcomingDays, { color: theme.colors.primary }]}>
                   {evt.days === 0 ? 'Hoje!' : `${evt.days}d`}
                 </Text>
               </View>
@@ -413,26 +418,26 @@ const CalendarScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+  container: { flex: 1 },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   legend: {
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee',
+    borderBottomWidth: 1,
     paddingVertical: 8, paddingHorizontal: 10,
   },
   legendGroup: { marginBottom: 4 },
-  legendGroupTitle: { fontSize: 10, fontWeight: '600', color: '#999', marginBottom: 4 },
+  legendGroupTitle: { fontSize: 10, fontWeight: '600', marginBottom: 4 },
   legendRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 2 },
   legendChip: { flexDirection: 'row', alignItems: 'center', marginRight: 10, marginBottom: 2 },
   legendDot: { width: 7, height: 7, borderRadius: 3, marginRight: 3 },
-  legendText: { fontSize: 10, color: '#666' },
+  legendText: { fontSize: 10 },
   details: { flex: 1, paddingHorizontal: 14, paddingTop: 8 },
   section: { marginBottom: 16 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#2e7d32', marginBottom: 10 },
-  emptyText: { fontSize: 14, color: '#999', fontStyle: 'italic', padding: 8 },
+  sectionTitle: { fontSize: 17, fontWeight: '700', marginBottom: 10 },
+  emptyText: { fontSize: 14, fontStyle: 'italic', padding: 8 },
 
   // Plant grouping card
-  plantCard: { backgroundColor: '#fff', borderRadius: 10, marginBottom: 12, borderWidth: 1, borderColor: '#e8e8e8', overflow: 'hidden' },
-  plantCardTitle: { fontSize: 15, fontWeight: '700', color: '#2e7d32', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  plantCard: { borderRadius: 10, marginBottom: 12, borderWidth: 1, overflow: 'hidden' },
+  plantCardTitle: { fontSize: 15, fontWeight: '700', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6, borderBottomWidth: 1 },
 
   // Event rows (inside plant card)
   eventRow: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 12, paddingVertical: 8 },
@@ -440,20 +445,20 @@ const styles = StyleSheet.create({
   eventIconText: { fontSize: 14 },
   eventInfo: { flex: 1 },
   eventRowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  eventLabel: { fontSize: 13, fontWeight: '600', color: '#333' },
-  eventTime: { fontSize: 11, color: '#aaa', fontWeight: '500', marginLeft: 8 },
-  eventPlant: { fontSize: 12, color: '#666', fontWeight: '400' },
-  eventDetail: { fontSize: 11, color: '#888', marginTop: 2 },
+  eventLabel: { fontSize: 13, fontWeight: '600' },
+  eventTime: { fontSize: 11, fontWeight: '500', marginLeft: 8 },
+  eventPlant: { fontSize: 12, fontWeight: '400' },
+  eventDetail: { fontSize: 11, marginTop: 2 },
 
   // Upcoming events
   upcomingItem: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 8, padding: 10, marginBottom: 6, borderWidth: 1, borderColor: '#eee',
+    flexDirection: 'row', alignItems: 'center',
+    borderRadius: 8, padding: 10, marginBottom: 6, borderWidth: 1,
   },
   upcomingBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, marginRight: 10 },
   upcomingBadgeText: { fontSize: 9, fontWeight: '700' },
-  upcomingName: { flex: 1, fontSize: 15, color: '#333' },
-  upcomingDays: { fontSize: 13, fontWeight: '600', color: '#2e7d32' },
+  upcomingName: { flex: 1, fontSize: 15 },
+  upcomingDays: { fontSize: 13, fontWeight: '600' },
 });
 
 export default CalendarScreen;

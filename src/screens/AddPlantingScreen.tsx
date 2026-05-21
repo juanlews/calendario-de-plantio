@@ -4,17 +4,27 @@ import {
   ScrollView, Alert, KeyboardAvoidingView, Platform, Modal,
   ActivityIndicator, FlatList,
 } from 'react-native';
+import { useTheme } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { usePlants } from '../context/PlantContext';
 import { searchStrains, getStrainInfo } from '../data/strains';
 import type { StrainInfo, CannabisGenetics, FloweringType } from '../data/strains';
-import { addDaysToDate, toLocalIsoDate } from '../utils/dateUtils';
+import type { GrowthStage } from '../types/planting';
+import { addDaysToDate, toLocalIsoDate, stageIcon, stageColor, stageLabel } from '../utils/dateUtils';
+
+// Helper: format Date -> YYYY-MM-DD for HTML date input
+const toIsoDateString = (d: Date) => d.toISOString().slice(0, 10);
+const fromIsoDateString = (s: string) => new Date(s + 'T00:00:00');
 import { useSettings } from '../context/SettingsContext';
 import { createCannabisPlanting } from '../data/storage';
+import TopHeader from '../components/TopHeader';
+
+const GROWTH_STAGES: GrowthStage[] = ['germinação', 'muda', 'vegetativo', 'floração', 'secagem', 'cura'];
 
 const AddPlantingScreen = () => {
   const { addPlanting } = usePlants();
   const { formatDate } = useSettings();
+  const theme = useTheme();
 
   // Strain selection
   const PAGE_SIZE = 30;
@@ -47,7 +57,6 @@ const AddPlantingScreen = () => {
       }
       setIsSearching(true);
       setVisibleCount(0);
-      // Non-blocking search
       setTimeout(() => {
         const { results, total } = searchStrains(query);
         setAllResults(results);
@@ -78,6 +87,7 @@ const AddPlantingScreen = () => {
   const [nickname, setNickname] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [notes, setNotes] = useState('');
+  const [selectedStage, setSelectedStage] = useState<GrowthStage>('germinação');
 
   const harvestDatePreview = useMemo(() => {
     if (!selectedStrain) return null;
@@ -106,6 +116,7 @@ const AddPlantingScreen = () => {
       qty,
       notes.trim(),
       nickname.trim(),
+      selectedStage,
     );
 
     addPlanting(newPlanting);
@@ -118,12 +129,13 @@ const AddPlantingScreen = () => {
     setNickname('');
     setQuantity('1');
     setNotes('');
+    setSelectedStage('germinação');
     setShowModal(false);
 
     Alert.alert('Sucesso!', `${selectedStrain.name} adicionada ao grow 🌱`);
   };
 
-  // Colors
+  // Colors - negócio, não tema
   const geneticsColor = (g: CannabisGenetics) => {
     switch (g) {
       case 'indica': return '#7B1FA2';
@@ -137,23 +149,21 @@ const AddPlantingScreen = () => {
 
   const renderStrainItem = useCallback(({ item }: { item: StrainInfo }) => (
     <TouchableOpacity
-      style={[styles.strainItem, selectedStrain?.name === item.name && styles.strainItemSelected]}
+      style={[styles.strainItem, { borderBottomColor: theme.colors.outlineVariant }, selectedStrain?.name === item.name && { backgroundColor: theme.colors.primaryContainer }]}
       onPress={() => handleSelectStrain(item)}
       activeOpacity={0.6}
     >
       <View style={[styles.typeDot, { backgroundColor: geneticsColor(item.genetics) }]} />
       <View style={styles.strainInfo}>
-        <Text style={styles.strainName} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.strainMeta} numberOfLines={1}>
+        <Text style={[styles.strainName, { color: theme.colors.onSurface }]} numberOfLines={1}>{item.name}</Text>
+        <Text style={[styles.strainMeta, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>
           {item.breeder} · THC {item.thcMin}-{item.thcMax}% · Flora {item.floweringDays}d
         </Text>
       </View>
       <View style={styles.badgeRow}>
-        {/* Genetics badge */}
         <Text style={[styles.typeBadge, { backgroundColor: geneticsColor(item.genetics) + '22', color: geneticsColor(item.genetics) }]}>
           {item.genetics.toUpperCase().slice(0, 3)}
         </Text>
-        {/* Flowering type badge */}
         <Text style={[styles.typeBadge, { backgroundColor: floweringTypeColor(item.floweringType) + '22', color: floweringTypeColor(item.floweringType) }]}>
           {item.floweringType === 'autoflower' ? 'AUTO' : 'FOTO'}
         </Text>
@@ -162,15 +172,32 @@ const AddPlantingScreen = () => {
         </Text>
       </View>
     </TouchableOpacity>
-  ), [selectedStrain, handleSelectStrain]);
+  ), [selectedStrain, handleSelectStrain, theme]);
+
+  // Web input style
+  const webInputStyle: React.CSSProperties = {
+    width: '100%', padding: '14px', fontSize: 16, borderRadius: 10,
+    border: `1px solid ${theme.colors.outlineVariant}`,
+    backgroundColor: theme.colors.elevation.level1,
+    color: theme.colors.onSurface, boxSizing: 'border-box' as const, fontFamily: 'inherit',
+  };
+
+  const webSelectStyle: React.CSSProperties = {
+    width: '100%', padding: '14px', fontSize: 16, borderRadius: 10,
+    border: `1px solid ${theme.colors.outlineVariant}`,
+    backgroundColor: theme.colors.elevation.level1,
+    color: theme.colors.onSurface, fontFamily: 'inherit', appearance: 'auto',
+  };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <View style={{ flex: 1 }}>
+      <TopHeader title="Adicionar Planta" />
+      <KeyboardAvoidingView style={[styles.container, { backgroundColor: theme.colors.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {/* Strain search */}
-        <Text style={styles.label}>🌿 Buscar strain</Text>
+        <Text style={[styles.label, { color: theme.colors.onSurface }]}>🌿 Buscar strain</Text>
         <TouchableOpacity
-          style={styles.searchInput}
+          style={[styles.searchInput, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}
           onPress={() => setShowModal(true)}
           activeOpacity={0.7}
         >
@@ -178,8 +205,8 @@ const AddPlantingScreen = () => {
             <View style={styles.selectedRow}>
               <View style={[styles.typeDot, { backgroundColor: geneticsColor(selectedStrain.genetics) }]} />
               <View style={styles.selectedInfo}>
-                <Text style={styles.selectedName}>{selectedStrain.name}</Text>
-                <Text style={styles.selectedMeta}>
+                <Text style={[styles.selectedName, { color: theme.colors.onSurface }]}>{selectedStrain.name}</Text>
+                <Text style={[styles.selectedMeta, { color: theme.colors.onSurfaceVariant }]}>
                   {selectedStrain.breeder} · THC {selectedStrain.thcMin}-{selectedStrain.thcMax}%
                 </Text>
               </View>
@@ -193,67 +220,67 @@ const AddPlantingScreen = () => {
               </View>
             </View>
           ) : (
-            <Text style={styles.placeholder}>Toque para buscar 8000+ strains...</Text>
+            <Text style={[styles.placeholder, { color: theme.colors.onSurfaceVariant }]}>Toque para buscar 8000+ strains...</Text>
           )}
         </TouchableOpacity>
 
         {/* Search Modal */}
         <Modal visible={showModal} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Selecionar Strain</Text>
-                <TouchableOpacity onPress={() => setShowModal(false)} style={styles.closeBtn}>
-                  <Text style={styles.closeBtnText}>✕</Text>
+            <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+              <View style={[styles.modalHeader, { borderBottomColor: theme.colors.outlineVariant }]}>
+                <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Selecionar Strain</Text>
+                <TouchableOpacity onPress={() => setShowModal(false)} style={[styles.closeBtn, { backgroundColor: theme.colors.elevation.level2 }]}>
+                  <Text style={[styles.closeBtnText, { color: theme.colors.onSurfaceVariant }]}>✕</Text>
                 </TouchableOpacity>
               </View>
 
               {/* Search bar */}
               <View style={styles.searchBarWrapper}>
                 <TextInput
-                  style={styles.searchBar}
+                  style={[styles.searchBar, { backgroundColor: theme.colors.elevation.level1, color: theme.colors.onSurface }]}
                   placeholder="Digite para buscar (nome, breeder, efeito, sabor)..."
-                  placeholderTextColor="#999"
+                  placeholderTextColor={theme.colors.onSurfaceVariant}
                   value={searchText}
                   onChangeText={handleSearch}
                   autoFocus
                   returnKeyType="search"
                 />
                 {isSearching && (
-                  <ActivityIndicator style={styles.searchSpinner} size="small" color="#2e7d32" />
+                  <ActivityIndicator style={styles.searchSpinner} size="small" color={theme.colors.primary} />
                 )}
               </View>
 
               {/* Results count */}
               {visibleResults.length > 0 && (
-                <Text style={styles.resultsCount}>
+                <Text style={[styles.resultsCount, { color: theme.colors.onSurfaceVariant }]}>
                   {totalResults} strains encontradas{visibleResults.length < totalResults ? `, mostrando ${visibleResults.length}` : ''}
                 </Text>
               )}
 
               {/* Legend */}
               <View style={styles.legend}>
-                <Text style={styles.legendSectionTitle}>Genética:</Text>
+                <Text style={[styles.legendSectionTitle, { color: theme.colors.onSurfaceVariant }]}>Genética:</Text>
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: '#1565C0' }]} />
-                  <Text style={styles.legendText}>Sativa</Text>
+                  <Text style={[styles.legendText, { color: theme.colors.onSurfaceVariant }]}>Sativa</Text>
                 </View>
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: '#7B1FA2' }]} />
-                  <Text style={styles.legendText}>Indica</Text>
+                  <Text style={[styles.legendText, { color: theme.colors.onSurfaceVariant }]}>Indica</Text>
                 </View>
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: '#2E7D32' }]} />
-                  <Text style={styles.legendText}>Hybrid</Text>
+                  <Text style={[styles.legendText, { color: theme.colors.onSurfaceVariant }]}>Hybrid</Text>
                 </View>
-                <Text style={[styles.legendSectionTitle, { marginLeft: 8 }]}>Floração:</Text>
+                <Text style={[styles.legendSectionTitle, { color: theme.colors.onSurfaceVariant, marginLeft: 8 }]}>Floração:</Text>
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: '#E65100' }]} />
-                  <Text style={styles.legendText}>Auto</Text>
+                  <Text style={[styles.legendText, { color: theme.colors.onSurfaceVariant }]}>Auto</Text>
                 </View>
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: '#455A64' }]} />
-                  <Text style={styles.legendText}>Foto</Text>
+                  <Text style={[styles.legendText, { color: theme.colors.onSurfaceVariant }]}>Foto</Text>
                 </View>
               </View>
 
@@ -269,7 +296,7 @@ const AddPlantingScreen = () => {
                 ListEmptyComponent={
                   searchText.trim().length >= 2 ? (
                     <View style={styles.emptyResults}>
-                      <Text style={styles.emptyResultsText}>
+                      <Text style={[styles.emptyResultsText, { color: theme.colors.onSurfaceVariant }]}>
                         {isSearching ? 'Buscando...' : 'Nenhuma strain encontrada'}
                       </Text>
                     </View>
@@ -278,10 +305,10 @@ const AddPlantingScreen = () => {
                 ListFooterComponent={
                   visibleCount < totalResults ? (
                     <TouchableOpacity
-                      style={styles.loadMoreBtn}
+                      style={[styles.loadMoreBtn, { borderTopColor: theme.colors.outlineVariant }]}
                       onPress={() => setVisibleCount((c) => Math.min(c + PAGE_SIZE, totalResults))}
                     >
-                      <Text style={styles.loadMoreText}>
+                      <Text style={[styles.loadMoreText, { color: theme.colors.primary }]}>
                         Carregar mais ({totalResults - visibleCount} restantes)
                       </Text>
                     </TouchableOpacity>
@@ -294,7 +321,7 @@ const AddPlantingScreen = () => {
 
         {/* Strain details */}
         {selectedStrain && (
-          <View style={styles.detailCard}>
+          <View style={[styles.detailCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
             <View style={styles.detailHeader}>
               <View style={styles.detailBadges}>
                 <View style={[styles.detailTypeBadge, { backgroundColor: geneticsColor(selectedStrain.genetics) }]}>
@@ -309,28 +336,28 @@ const AddPlantingScreen = () => {
                 </View>
               </View>
               <View style={styles.detailInfo}>
-                <Text style={styles.detailName}>{selectedStrain.name}</Text>
-                <Text style={styles.detailBreeder}>{selectedStrain.breeder}</Text>
+                <Text style={[styles.detailName, { color: theme.colors.onSurface }]}>{selectedStrain.name}</Text>
+                <Text style={[styles.detailBreeder, { color: theme.colors.onSurfaceVariant }]}>{selectedStrain.breeder}</Text>
               </View>
             </View>
 
             <View style={styles.detailGrid}>
-              <DetailItem label="THC" value={`${selectedStrain.thcMin}-${selectedStrain.thcMax}%`} />
-              <DetailItem label="Floração" value={`${selectedStrain.floweringDays}d`} />
+              <DetailItem label="THC" value={`${selectedStrain.thcMin}-${selectedStrain.thcMax}%`} theme={theme} />
+              <DetailItem label="Floração" value={`${selectedStrain.floweringDays}d`} theme={theme} />
               {selectedStrain.floweringType === 'autoflower' && selectedStrain.autoflowerDays && (
-                <DetailItem label="Semente→Colheita" value={`${selectedStrain.autoflowerDays}d`} />
+                <DetailItem label="Semente→Colheita" value={`${selectedStrain.autoflowerDays}d`} theme={theme} />
               )}
-              <DetailItem label="Altura" value={selectedStrain.height} />
-              <DetailItem label="Yield" value={selectedStrain.yield} />
-              <DetailItem label="Dificuldade" value={selectedStrain.difficulty} />
+              <DetailItem label="Altura" value={selectedStrain.height} theme={theme} />
+              <DetailItem label="Yield" value={selectedStrain.yield} theme={theme} />
+              <DetailItem label="Dificuldade" value={selectedStrain.difficulty} theme={theme} />
             </View>
 
             {selectedStrain.effects.length > 0 && (
               <View style={styles.tagsRow}>
-                <Text style={styles.tagsLabel}>Efeitos:</Text>
+                <Text style={[styles.tagsLabel, { color: theme.colors.onSurfaceVariant }]}>Efeitos:</Text>
                 {selectedStrain.effects.map((e) => (
-                  <View key={e} style={styles.effectTag}>
-                    <Text style={styles.effectText}>{e}</Text>
+                  <View key={e} style={[styles.effectTag, { backgroundColor: theme.colors.primaryContainer }]}>
+                    <Text style={[styles.effectText, { color: theme.colors.onPrimaryContainer }]}>{e}</Text>
                   </View>
                 ))}
               </View>
@@ -338,10 +365,10 @@ const AddPlantingScreen = () => {
 
             {selectedStrain.flavors.length > 0 && (
               <View style={styles.tagsRow}>
-                <Text style={styles.tagsLabel}>Sabores:</Text>
+                <Text style={[styles.tagsLabel, { color: theme.colors.onSurfaceVariant }]}>Sabores:</Text>
                 {selectedStrain.flavors.map((f) => (
-                  <View key={f} style={styles.flavorTag}>
-                    <Text style={styles.flavorText}>{f}</Text>
+                  <View key={f} style={[styles.flavorTag, { backgroundColor: theme.colors.secondaryContainer }]}>
+                    <Text style={[styles.flavorText, { color: theme.colors.onSecondaryContainer }]}>{f}</Text>
                   </View>
                 ))}
               </View>
@@ -350,184 +377,212 @@ const AddPlantingScreen = () => {
         )}
 
         {/* Nickname */}
-        <Text style={styles.label}>🏷️ Apelido da planta (opcional)</Text>
+        <Text style={[styles.label, { color: theme.colors.onSurface }]}>🏷️ Apelido da planta (opcional)</Text>
         <TextInput
-          style={styles.nicknameInput}
+          style={[styles.nicknameInput, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant, color: theme.colors.onSurface }]}
           placeholder="Ex: Planta da janela, Armário 1, Mãe #3..."
-          placeholderTextColor="#999"
+          placeholderTextColor={theme.colors.onSurfaceVariant}
           value={nickname}
           onChangeText={setNickname}
           maxLength={40}
         />
 
         {/* Quantity */}
-        <Text style={styles.label}>🌱 Quantidade de plantas</Text>
+        <Text style={[styles.label, { color: theme.colors.onSurface }]}>🌱 Quantidade de plantas</Text>
         <View style={styles.qtyRow}>
-          <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(String(Math.max(1, (parseInt(quantity) || 1) - 1)))}>
-            <Text style={styles.qtyBtnText}>−</Text>
+          <TouchableOpacity style={[styles.qtyBtn, { backgroundColor: theme.colors.primaryContainer }]} onPress={() => setQuantity(String(Math.max(1, (parseInt(quantity) || 1) - 1)))}>
+            <Text style={[styles.qtyBtnText, { color: theme.colors.onPrimaryContainer }]}>−</Text>
           </TouchableOpacity>
-          <Text style={styles.qtyValue}>{quantity}</Text>
-          <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(String(Math.min(50, (parseInt(quantity) || 1) + 1)))}>
-            <Text style={styles.qtyBtnText}>+</Text>
+          <Text style={[styles.qtyValue, { color: theme.colors.onSurface }]}>{quantity}</Text>
+          <TouchableOpacity style={[styles.qtyBtn, { backgroundColor: theme.colors.primaryContainer }]} onPress={() => setQuantity(String(Math.min(50, (parseInt(quantity) || 1) + 1)))}>
+            <Text style={[styles.qtyBtnText, { color: theme.colors.onPrimaryContainer }]}>+</Text>
           </TouchableOpacity>
         </View>
 
         {/* Seed date */}
-        <Text style={styles.label}>📅 Data da semente/germinação</Text>
-        <TouchableOpacity style={styles.dateBtn} onPress={() => setShowDatePicker(true)}>
-          <Text style={styles.dateBtnText}>{formatDate(toLocalIsoDate(seedDate))}</Text>
-        </TouchableOpacity>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={seedDate}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={(_, d) => { setShowDatePicker(false); if (d) setSeedDate(d); }}
-            maximumDate={new Date()}
+        <Text style={[styles.label, { color: theme.colors.onSurface }]}>🗓️ Data da semente/germinação</Text>
+        {Platform.OS === 'web' ? (
+          <input
+            type="date"
+            value={toIsoDateString(seedDate)}
+            max={toIsoDateString(new Date())}
+            onChange={(e) => { if (e.target.value) setSeedDate(fromIsoDateString(e.target.value)); }}
+            style={webInputStyle}
           />
+        ) : (
+          <>
+            <TouchableOpacity style={[styles.dateBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]} onPress={() => setShowDatePicker(true)}>
+              <Text style={[styles.dateBtnText, { color: theme.colors.onSurface }]}>{formatDate(toLocalIsoDate(seedDate))}</Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={seedDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(_, d) => { setShowDatePicker(false); if (d) setSeedDate(d); }}
+                maximumDate={new Date()}
+              />
+            )}
+          </>
         )}
 
         {/* Harvest preview */}
         {selectedStrain && harvestDatePreview && (
-          <View style={styles.previewCard}>
-            <Text style={styles.previewTitle}>📋 Previsão</Text>
+          <View style={[styles.previewCard, { backgroundColor: theme.colors.secondaryContainer, borderColor: theme.colors.secondary }]}>
+            <Text style={[styles.previewTitle, { color: theme.colors.onSecondaryContainer }]}>📋 Previsão</Text>
             <View style={styles.previewRow}>
-              <Text style={styles.previewLabel}>Semeadura:</Text>
-              <Text style={styles.previewValue}>{formatDate(toLocalIsoDate(seedDate))}</Text>
-            </View>
-            {selectedStrain.floweringType === 'photoperiodic' && (
-              <View style={styles.previewRow}>
-                <Text style={styles.previewLabel}>Floração (est.):</Text>
-                <Text style={styles.previewValue}>{formatDate(addDaysToDate(toLocalIsoDate(seedDate), 30))}</Text>
-              </View>
-            )}
-            <View style={styles.previewRow}>
-              <Text style={styles.previewLabel}>Colheita (est.):</Text>
-              <Text style={styles.previewValue}>{formatDate(harvestDatePreview)}</Text>
+              <Text style={[styles.previewLabel, { color: theme.colors.onSecondaryContainer }]}>{formatDate(toLocalIsoDate(seedDate))}</Text>
+              <Text style={[styles.previewValue, { color: theme.colors.onSecondaryContainer }]}>{formatDate(harvestDatePreview)}</Text>
             </View>
           </View>
         )}
 
+        {/* Growth stage */}
+        <Text style={[styles.label, { color: theme.colors.onSurface }]}>🌱 Estágio atual</Text>
+        {Platform.OS === 'web' ? (
+          <select
+            value={selectedStage}
+            onChange={(e) => setSelectedStage(e.target.value as GrowthStage)}
+            style={webSelectStyle}
+          >
+            {GROWTH_STAGES.map((s) => (
+              <option key={s} value={s}>
+                {stageIcon(s)} {stageLabel(s)}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <View style={styles.stageRow}>
+            {GROWTH_STAGES.map((s) => (
+              <TouchableOpacity
+                key={s}
+                style={[
+                  styles.stageBtn,
+                  { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant },
+                  selectedStage === s && { backgroundColor: stageColor(s) + '22', borderColor: stageColor(s) },
+                ]}
+                onPress={() => setSelectedStage(s)}
+              >
+                <Text style={styles.stageIcon}>{stageIcon(s)}</Text>
+                <Text style={[styles.stageBtnText, { color: theme.colors.onSurfaceVariant }, selectedStage === s && { color: stageColor(s), fontWeight: '700' }]}>
+                  {stageLabel(s)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         {/* Notes */}
-        <Text style={styles.label}>📝 Observações (opcional)</Text>
+        <Text style={[styles.label, { color: theme.colors.onSurface }]}>📝 Observações (opcional)</Text>
         <TextInput
-          style={[styles.notesInput, styles.textArea]}
+          style={[styles.notesInput, styles.textArea, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant, color: theme.colors.onSurface }]}
           placeholder="Ex: Indoor, LED 300W, vaso 11L..."
           value={notes}
           onChangeText={setNotes}
           multiline
           numberOfLines={3}
-          placeholderTextColor="#999"
+          placeholderTextColor={theme.colors.onSurfaceVariant}
         />
 
         {/* Submit */}
         <TouchableOpacity
-          style={[styles.submitBtn, !selectedStrain && styles.submitBtnDisabled]}
+          style={[styles.submitBtn, { backgroundColor: theme.colors.primary }, !selectedStrain && { backgroundColor: theme.colors.outline }]}
           disabled={!selectedStrain}
           onPress={handleAdd}
         >
-          <Text style={styles.submitText}>🌱 Adicionar ao grow</Text>
+          <Text style={[styles.submitText, { color: theme.colors.onPrimary }]}>🌱 Adicionar ao grow</Text>
         </TouchableOpacity>
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
-const DetailItem = ({ label, value }: { label: string; value: string }) => (
-  <View style={styles.detailBlock}>
-    <Text style={styles.detailBlockLabel}>{label}</Text>
-    <Text style={styles.detailBlockValue}>{value}</Text>
+const DetailItem = ({ label, value, theme }: { label: string; value: string; theme: any }) => (
+  <View style={[styles.detailBlock, { backgroundColor: theme.colors.elevation.level1 }]}>
+    <Text style={[styles.detailBlockLabel, { color: theme.colors.onSurfaceVariant }]}>{label}</Text>
+    <Text style={[styles.detailBlockValue, { color: theme.colors.onSurface }]}>{value}</Text>
   </View>
 );
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+  container: { flex: 1 },
   scroll: { padding: 16, paddingBottom: 40 },
-  label: { fontSize: 15, fontWeight: '600', color: '#333', marginBottom: 6, marginTop: 14 },
-  searchInput: {
-    backgroundColor: '#fff', borderRadius: 10, padding: 14,
-    borderWidth: 1, borderColor: '#ddd', minHeight: 56,
-  },
-  nicknameInput: {
-    backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 16,
-    borderWidth: 1, borderColor: '#ddd', color: '#333',
-  },
-  placeholder: { fontSize: 16, color: '#999' },
+  label: { fontSize: 15, fontWeight: '600', marginBottom: 6, marginTop: 14 },
+  searchInput: { borderRadius: 10, padding: 14, borderWidth: 1, minHeight: 56 },
+  nicknameInput: { borderRadius: 10, padding: 12, fontSize: 16, borderWidth: 1 },
+  placeholder: { fontSize: 16 },
   selectedRow: { flexDirection: 'row', alignItems: 'center' },
   typeDot: { width: 10, height: 10, borderRadius: 5, marginRight: 10 },
   selectedInfo: { flex: 1 },
-  selectedName: { fontSize: 16, fontWeight: '600', color: '#333' },
-  selectedMeta: { fontSize: 12, color: '#999', marginTop: 2 },
+  selectedName: { fontSize: 16, fontWeight: '600' },
+  selectedMeta: { fontSize: 12, marginTop: 2 },
   selectedBadges: { flexDirection: 'row', gap: 4 },
   miniBadge: { paddingHorizontal: 4, paddingVertical: 1, borderRadius: 3, fontSize: 9, fontWeight: '800' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: {
-    backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    maxHeight: '90%', paddingBottom: 20,
-  },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#333' },
-  closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center' },
-  closeBtnText: { fontSize: 16, color: '#666' },
+  modalContent: { borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%', paddingBottom: 20 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1 },
+  modalTitle: { fontSize: 18, fontWeight: '700' },
+  closeBtn: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  closeBtnText: { fontSize: 16 },
   searchBarWrapper: { flexDirection: 'row', alignItems: 'center', margin: 12 },
-  searchBar: {
-    flex: 1, backgroundColor: '#f5f5f5', borderRadius: 10, padding: 12, fontSize: 16,
-  },
+  searchBar: { flex: 1, borderRadius: 10, padding: 12, fontSize: 16 },
   searchSpinner: { marginLeft: 8 },
-  resultsCount: { fontSize: 12, color: '#999', paddingHorizontal: 16, marginBottom: 4 },
+  resultsCount: { fontSize: 12, paddingHorizontal: 16, marginBottom: 4 },
   legend: { flexDirection: 'row', paddingHorizontal: 16, paddingBottom: 8, gap: 12, flexWrap: 'wrap', alignItems: 'center' },
-  legendSectionTitle: { fontSize: 12, color: '#999', fontWeight: '600' },
+  legendSectionTitle: { fontSize: 12, fontWeight: '600' },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendText: { fontSize: 12, color: '#666' },
-  loadMoreBtn: { padding: 14, alignItems: 'center', borderTopWidth: 1, borderTopColor: '#eee' },
-  loadMoreText: { fontSize: 14, color: '#2e7d32', fontWeight: '600' },
+  legendText: { fontSize: 12 },
+  loadMoreBtn: { padding: 14, alignItems: 'center', borderTopWidth: 1 },
+  loadMoreText: { fontSize: 14, fontWeight: '600' },
   modalList: { maxHeight: 500 },
   emptyResults: { padding: 30, alignItems: 'center' },
-  emptyResultsText: { fontSize: 16, color: '#999' },
-  strainItem: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-  strainItemSelected: { backgroundColor: '#e8f5e9' },
+  emptyResultsText: { fontSize: 16 },
+  strainItem: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1 },
   strainInfo: { flex: 1 },
-  strainName: { fontSize: 16, fontWeight: '600', color: '#333' },
-  strainMeta: { fontSize: 12, color: '#888', marginTop: 2 },
+  strainName: { fontSize: 16, fontWeight: '600' },
+  strainMeta: { fontSize: 12, marginTop: 2 },
   badgeRow: { alignItems: 'flex-end', gap: 4 },
   typeBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, fontSize: 10, fontWeight: '800' },
   difficultyBadge: { fontSize: 14 },
-  detailCard: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginTop: 8, borderWidth: 1, borderColor: '#e0e0e0' },
+  detailCard: { borderRadius: 12, padding: 14, marginTop: 8, borderWidth: 1 },
   detailHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
   detailBadges: { flexDirection: 'column', gap: 4, marginRight: 10 },
   detailTypeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
   detailTypeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
   detailInfo: { flex: 1 },
-  detailName: { fontSize: 20, fontWeight: '700', color: '#333' },
-  detailBreeder: { fontSize: 13, color: '#888', marginTop: 2 },
+  detailName: { fontSize: 20, fontWeight: '700' },
+  detailBreeder: { fontSize: 13, marginTop: 2 },
   detailGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  detailBlock: { backgroundColor: '#f5f5f5', borderRadius: 8, padding: 8, width: '47%' },
-  detailBlockLabel: { fontSize: 10, color: '#999', fontWeight: '500' },
-  detailBlockValue: { fontSize: 13, color: '#333', fontWeight: '600', marginTop: 2 },
+  detailBlock: { borderRadius: 8, padding: 8, width: '47%' },
+  detailBlockLabel: { fontSize: 10, fontWeight: '500' },
+  detailBlockValue: { fontSize: 13, fontWeight: '600', marginTop: 2 },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginTop: 10, gap: 4 },
-  tagsLabel: { fontSize: 12, color: '#999', marginRight: 6 },
-  effectTag: { backgroundColor: '#e8f5e9', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, marginRight: 4 },
-  effectText: { fontSize: 11, color: '#2e7d32', fontWeight: '500' },
-  flavorTag: { backgroundColor: '#fff3e0', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, marginRight: 4 },
-  flavorText: { fontSize: 11, color: '#e65100', fontWeight: '500' },
+  tagsLabel: { fontSize: 12, marginRight: 6 },
+  effectTag: { borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, marginRight: 4 },
+  effectText: { fontSize: 11, fontWeight: '500' },
+  flavorTag: { borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, marginRight: 4 },
+  flavorText: { fontSize: 11, fontWeight: '500' },
   qtyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 8 },
-  qtyBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#e8f5e9', justifyContent: 'center', alignItems: 'center' },
-  qtyBtnText: { fontSize: 24, fontWeight: 'bold', color: '#2e7d32' },
-  qtyValue: { fontSize: 24, fontWeight: '700', color: '#333', marginHorizontal: 20, minWidth: 40, textAlign: 'center' },
-  dateBtn: { backgroundColor: '#fff', borderRadius: 10, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
-  dateBtnText: { fontSize: 16, color: '#333', fontWeight: '500' },
-  previewCard: { backgroundColor: '#fff3e0', borderRadius: 12, padding: 14, marginTop: 8, borderWidth: 1, borderColor: '#ffe0b2' },
-  previewTitle: { fontSize: 15, fontWeight: '700', color: '#e65100', marginBottom: 8 },
+  qtyBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  qtyBtnText: { fontSize: 24, fontWeight: 'bold' },
+  qtyValue: { fontSize: 24, fontWeight: '700', marginHorizontal: 20, minWidth: 40, textAlign: 'center' },
+  dateBtn: { borderRadius: 10, padding: 14, alignItems: 'center', borderWidth: 1 },
+  dateBtnText: { fontSize: 16, fontWeight: '500' },
+  previewCard: { borderRadius: 12, padding: 14, marginTop: 8, borderWidth: 1 },
+  previewTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 },
   previewRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  previewLabel: { fontSize: 14, color: '#666' },
-  previewValue: { fontSize: 14, color: '#333', fontWeight: '600' },
-  notesInput: { backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 16, borderWidth: 1, borderColor: '#ddd', color: '#333' },
+  previewLabel: { fontSize: 14 },
+  previewValue: { fontSize: 14, fontWeight: '600' },
+  notesInput: { borderRadius: 10, padding: 12, fontSize: 16, borderWidth: 1 },
   textArea: { height: 80, textAlignVertical: 'top' },
-  submitBtn: { backgroundColor: '#2e7d32', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 20 },
-  submitBtnDisabled: { backgroundColor: '#a5d6a7' },
-  submitText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  submitBtn: { borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 20 },
+  submitText: { fontSize: 17, fontWeight: '700' },
+  stageRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  stageBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8, borderWidth: 1, gap: 4 },
+  stageIcon: { fontSize: 16 },
+  stageBtnText: { fontSize: 12, fontWeight: '500' },
 });
 
 export default AddPlantingScreen;
