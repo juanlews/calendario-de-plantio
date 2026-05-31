@@ -20,9 +20,9 @@ App React Native (Expo) para gerenciar o cultivo de cannabis — da semente à c
 
 ### 📋 Detalhes e Diário (Journal)
 - **Visão completa do plantio** — strain, datas, estágio atual, previsões
-- **7 tipos de registro**: 🌧️ Rega, 💧 Nutrição, ✂️ Poda, 💨 Pulverização, 🐛 Pragas, 🌾 Colheita, 📌 Geral
+- **6 tipos de registro**: 💧 Rega, 🧪 Nutrição, ✂️ Poda, 📷 Foto, 🎥 Vídeo, 💬 Comentário
 - **Notas livres** por registro
-- **Histórico completo** vinculado ao plantio
+- **Histórico completo** vinculado ao plantio com timeline visual
 
 ### 📅 Calendário
 - **Visão mensal** com marcações coloridas por estágio e plantio
@@ -34,8 +34,8 @@ App React Native (Expo) para gerenciar o cultivo de cannabis — da semente à c
 - **Modo de tema**: Claro / Escuro / Dinâmico (Material You)
 - **Preview visual da cor** ativa no seletor de tema
 - **Formato de data**: DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD
-- **Formato de hora**: 12h / 24h
-- **Fuso horário** configurável
+- **Formato de hora**: HH:mm / HH:mm:ss
+- **Fuso horário** automático (Intl API)
 
 ### 🎨 Temas
 - **Material You (Android 12+)** — cores dinâmicas do wallpaper via `react-native-dynamic-theme`
@@ -49,25 +49,27 @@ App React Native (Expo) para gerenciar o cultivo de cannabis — da semente à c
 
 ```
 src/
-├── components/       # Componentes reutilizáveis
+├── components/           # Componentes reutilizáveis
 │   ├── TopHeader.tsx
 │   └── ColorBall.tsx
-├── context/          # React Context (estado global)
-├── data/             # Camada de dados (strains, storage, settings)
-├── screens/          # Telas do app
-│   ├── PlantingsScreen.tsx
-│   ├── AddPlantingScreen.tsx
-│   ├── PlantDetailScreen.tsx
-│   ├── AddJournalEntryScreen.tsx
-│   ├── CalendarScreen.tsx
-│   └── SettingsScreen.tsx
-├── theme/            # Engine de temas (ThemeProvider, tokens)
-├── types/            # Definições de tipos TypeScript
-└── utils/            # Utilitários (datas, estágios, display names)
+├── context/              # React Context (estado global)
+├── data/                 # Camada de dados (strains, storage, settings)
+├── screens/              # Telas do app (componentizadas)
+│   ├── AddJournalEntry/  #   Adicionar registro ao diário
+│   ├── AddPlanting/      #   Adicionar novo plantio
+│   ├── Calendar/         #   Calendário de eventos
+│   ├── PlantDetail/      #   Detalhes de um plantio
+│   ├── Plantings/        #   Lista de plantios
+│   └── Settings/         #   Configurações do app
+├── theme/                # Engine de temas (ThemeProvider, tokens)
+├── types/                # Definições de tipos TypeScript
+└── utils/                # Utilitários (datas, estágios, display names)
 assets/
 ├── cannabis-strains.csv   # Base de dados original
 └── strains_db.json        # Base compactada
 ```
+
+Cada tela segue o padrão: `Screen.tsx` (lógica principal) + sub-componentes + `shared.tsx`/`styles.ts` + `index.ts` (barrel exports).
 
 ---
 
@@ -81,7 +83,7 @@ assets/
 | Temas | react-native-dynamic-theme |
 | Persistência | @react-native-async-storage/async-storage |
 | Calendário | react-native-calendars |
-| Formululários | @react-native-community/datetimepicker |
+| Formulários | @react-native-community/datetimepicker |
 | Linguagem | TypeScript |
 
 ---
