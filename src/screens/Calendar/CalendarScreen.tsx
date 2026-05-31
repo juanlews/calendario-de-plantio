@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
@@ -6,7 +6,7 @@ import { Calendar, type DateData } from 'react-native-calendars';
 import { format, parseISO, isValid, addDays, isBefore, eachDayOfInterval, startOfDay } from 'date-fns';
 import { usePlants } from '../../context/PlantContext';
 import { useSettings } from '../../context/SettingsContext';
-import { daysRemaining, plantDisplayName as plantDisplayNameDefault, toLocalIsoDate } from '../../utils/dateUtils';
+import { daysRemaining, plantDisplayName as plantDisplayNameDefault } from '../../utils/dateUtils';
 import { loadAllJournalEntries } from '../../data/journalStorage';
 import type { PlantJournalEntry } from '../../types/planting';
 import TopHeader from '../../components/TopHeader';
@@ -15,8 +15,7 @@ import { EventsList, UpcomingList } from './EventsList';
 import { STAGE_TO_DOT, ENTRY_TO_DOT, ENTRY_CONFIG } from './constants';
 import { styles } from './styles';
 
-// Shared state across screen remounts
-let sharedSelectedDate: string = '';
+let _selectedDateCache = '';
 
 const CalendarScreen: React.FC = () => {
   const { plantings, loading, deletePlanting } = usePlants();
@@ -24,19 +23,10 @@ const CalendarScreen: React.FC = () => {
   const theme = useTheme();
   const plantDisplayName = (p: Parameters<typeof plantDisplayNameDefault>[0]) =>
     plantDisplayNameDefault(p, fmtDate);
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    // Restore persisted selection, or default to today on first open
-    const today = toLocalIsoDate(new Date());
-    if (sharedSelectedDate) {
-      // Validate it still makes sense (not stale by more than a day)
-      const parsed = parseISO(sharedSelectedDate);
-      if (isValid(parsed)) {
-        return sharedSelectedDate;
-      }
-    }
-    return today;
-  });
-  const initialized = useRef(false);
+
+  const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
+  const [selectedDate, setSelectedDate] = useState<string>(() => _selectedDateCache || todayStr);
+
   const [journalEntries, setJournalEntries] = useState<PlantJournalEntry[]>([]);
   const [journalLoading, setJournalLoading] = useState(true);
 
@@ -47,25 +37,9 @@ const CalendarScreen: React.FC = () => {
     });
   }, []);
 
-  // On first mount and on focus, set selectedDate to today if not yet set
-  useEffect(() => {
-    if (!initialized.current) {
-      initialized.current = true;
-      const today = toLocalIsoDate(new Date());
-      // Only auto-select today if the shared value is empty or invalid
-      if (!sharedSelectedDate || !isValid(parseISO(sharedSelectedDate))) {
-        sharedSelectedDate = today;
-        setSelectedDate(today);
-      }
-    }
-  }, []);
-
-  // Restore shared selection when navigating back to this screen
   useFocusEffect(
     useCallback(() => {
-      if (sharedSelectedDate && isValid(parseISO(sharedSelectedDate))) {
-        setSelectedDate(sharedSelectedDate);
-      }
+      if (_selectedDateCache) setSelectedDate(_selectedDateCache);
     }, [])
   );
 
@@ -242,10 +216,8 @@ const CalendarScreen: React.FC = () => {
   }, [plantings]);
 
   const handleDayPress = useCallback((day: DateData) => {
-    // Use local date from the timestamp to avoid UTC off-by-one
-    const localDate = toLocalIsoDate(new Date(day.year, day.month - 1, day.day));
-    sharedSelectedDate = localDate;
-    setSelectedDate(localDate);
+    _selectedDateCache = day.dateString;
+    setSelectedDate(day.dateString);
   }, []);
 
   const handleDelete = useCallback((id: string, p: typeof plantings[0]) => {
@@ -299,7 +271,7 @@ const CalendarScreen: React.FC = () => {
         {selectedDate && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-              🗓️ {fmtDate(selectedDate)}
+              🗓️ {selectedDate.split('-').reverse().join('/')}
             </Text>
             {selectedDayByPlant.length === 0 ? (
               <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>
