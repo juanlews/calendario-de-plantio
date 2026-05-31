@@ -32,12 +32,20 @@ export const EventsList: React.FC<Props> = ({ events, loading, theme }) => {
           </View>
           <View style={styles.eventInfo}>
             <View style={styles.eventRowTop}>
-              <Text style={styles.eventLabel}>
+              <Text style={[styles.eventLabel, { color: theme.colors.onSurface }]}>
                 <Text style={{ color: evt.color }}>{evt.label}</Text>
               </Text>
-              {evt.time && <Text style={styles.eventTime}>{evt.time}</Text>}
+              {evt.time && (
+                <Text style={[styles.eventTime, { color: theme.colors.onSurfaceVariant }]}>
+                  {evt.time}
+                </Text>
+              )}
             </View>
-            {evt.detail && <Text style={styles.eventDetail}>{evt.detail}</Text>}
+            {evt.detail && (
+              <Text style={[styles.eventDetail, { color: theme.colors.onSurfaceVariant }]}>
+                {evt.detail}
+              </Text>
+            )}
           </View>
         </View>
       ))}
