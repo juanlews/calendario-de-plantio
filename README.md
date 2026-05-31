@@ -2,7 +2,7 @@
 
 App React Native (Expo) para gerenciar o cultivo de cannabis — da semente à cura.
 
-> **Status:** Alfa (v0.1.0) — funcionalidades em desenvolvimento.
+> **Status:** Alfa (v0.2.0) — funcionalidades em desenvolvimento.
 
 📦 **[Baixar APK na página de Releases](https://github.com/juanlews/calendario-de-plantio/releases)**
 
@@ -20,15 +20,29 @@ App React Native (Expo) para gerenciar o cultivo de cannabis — da semente à c
 
 ### 📋 Detalhes e Diário (Journal)
 - **Visão completa do plantio** — strain, datas, estágio atual, previsões
-- **6 tipos de registro**: 💧 Rega, 🧪 Nutrição, ✂️ Poda, 📷 Foto, 🎥 Vídeo, 💬 Comentário
+- **7 tipos de registro**: 💧 Rega, 🧪 Nutrição, ✂️ Poda, 📷 Foto, 🎥 Vídeo, 💬 Comentário, 🔄 Mudança de estágio
 - **Notas livres** por registro
 - **Histórico completo** vinculado ao plantio com timeline visual
 
 ### 📅 Calendário
 - **Visão mensal** com marcações coloridas por estágio e plantio
 - **Eventos agrupados por planta** nos detalhes do dia
-- **Próximos 45 dias** — lista de eventos futuros
+- **Próximos 45 dias** — lista de eventos futuros com projeções automáticas (floração e colheita estimadas)
 - **Legendas temáticas** que acompanham o tema ativo
+
+### 🆕 Novidades na v0.2.0
+- **Mudança de estágio no diário** — altere o estágio via modal com date picker; gera registro `stage_change`
+- **Date picker** — data exata da transição (datas passadas, mínimo = data da semente)
+- **Projeções dinâmicas** — floração/colheita estimadas no "Próximos 45 dias" baseado nos `floweringDays`
+- **Refatoração completa** — cada tela é um módulo componentizado com barrel exports
+- **Correção de fuso** — datas com timezone local, sem drift UTC
+- **Highlight visual** — data selecionada e hoje com círculo preenchido
+- **Idade da planta** — `(Xd)` nos cards de evento do calendário
+
+### 📅 Gestão de Estágios
+- **Modal de edição** com seletor visual + date picker
+- **Botão Salvar** — confirma e registra no diário automaticamente
+- **Persistência automática** — `vegetativeDate`, `floweringDate`, `harvestDate` definidos conforme o estágio alvo
 
 ### ⚙️ Configurações
 - **Modo de tema**: Claro / Escuro / Dinâmico (Material You)
