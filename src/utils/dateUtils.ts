@@ -18,8 +18,15 @@ export const toLocalIsoDate = (date: Date): string => format(date, 'yyyy-MM-dd')
 /** Convert a Date to a full ISO-8601 UTC timestamp (e.g. 2025-05-20T03:00:00.000Z) */
 export const toUtcTimestamp = (date: Date): string => date.toISOString();
 
-/** Format date to DD/MM/YYYY — parseISO auto-converts to local timezone */
+/** Format date to DD/MM/YYYY — handles yyyy-MM-dd strings without UTC drift */
 export const formatDate = (dateStr: string): string => {
+  // If it's a plain yyyy-MM-dd date string (no time part), parse as local date
+  // to avoid UTC timezone shift (e.g. 2026-05-31 becoming 30/05 in UTC-3)
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) {
+    const [, y, mo, d] = m;
+    return `${d}/${mo}/${y}`;
+  }
   const date = parseISO(dateStr);
   if (!isValid(date)) return dateStr;
   return format(date, 'dd/MM/yyyy', { locale: ptBR });

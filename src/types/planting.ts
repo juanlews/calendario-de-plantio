@@ -10,7 +10,8 @@ export type JournalEntryType =
   | 'comment'     // 💬 comentário livre
   | 'watering'    // 💧 registro de rega
   | 'nutrition'   // 🧪 aplicação de nutrição/fertilizante
-  | 'pruning';    // ✂️ registro de poda
+  | 'pruning'     // ✂️ registro de poda
+  | 'stage_change'; // 🔄 mudança de estágio
 
 export interface WateringData {
   volumeMl?: number;
@@ -44,6 +45,7 @@ export interface PlantJournalEntry {
   watering?: WateringData;
   nutrition?: NutritionData;
   pruning?: PruningData;
+  stageChange?: { from: string; to: string }; // de/para (stage_change)
 }
 
 export interface StrainInfo {

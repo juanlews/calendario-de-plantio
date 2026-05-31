@@ -7,15 +7,14 @@ import { useTheme } from 'react-native-paper';
 import { PlantProvider } from './src/context/PlantContext';
 import { SettingsProvider } from './src/context/SettingsContext';
 import { ThemeProvider } from './src/theme/ThemeProvider';
-import CalendarScreen from './src/screens/CalendarScreen';
-import PlantingsScreen from './src/screens/PlantingsScreen';
-import AddPlantingScreen from './src/screens/AddPlantingScreen';
-import PlantDetailScreen from './src/screens/PlantDetailScreen';
-import AddJournalEntryScreen from './src/screens/AddJournalEntryScreen';
-import SettingsScreen from './src/screens/SettingsScreen';
+import { CalendarScreen } from './src/screens/Calendar';
+import { PlantingsScreen } from './src/screens/Plantings';
+import { AddPlantingScreen } from './src/screens/AddPlanting';
+import { PlantDetailScreen } from './src/screens/PlantDetail';
+import type { PlantDetailParamList } from './src/screens/PlantDetail';
+import { AddJournalEntryScreen } from './src/screens/AddJournalEntry';
+import { SettingsScreen } from './src/screens/Settings';
 import { Ionicons } from '@expo/vector-icons';
-
-import type { PlantDetailParamList } from './src/screens/PlantDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const PlantStack = createNativeStackNavigator<PlantDetailParamList>();
