@@ -225,6 +225,9 @@ const CalendarScreen: React.FC = () => {
         if (e.type === 'pruning' && e.pruning) {
           detail = e.pruning.method + (e.pruning.details ? ` — ${e.pruning.details}` : '');
         }
+        if (e.type === 'stage_change' && e.stageChange) {
+          detail = `${e.stageChange.from} → ${e.stageChange.to}`;
+        }
         g.events.push({ label: cfg.label, icon: cfg.icon, color: cfg.color, detail, time: entryTime(e) });
       });
 

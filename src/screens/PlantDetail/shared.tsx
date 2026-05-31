@@ -91,4 +91,9 @@ export const styles = StyleSheet.create({
   modalStageIcon: { fontSize: 22, marginRight: 12 },
   modalStageLabel: { fontSize: 16, flex: 1 },
   modalStageCheck: { fontSize: 18, fontWeight: '700' },
+  modalSaveBtn: {
+    marginHorizontal: 16, marginTop: 16, padding: 14,
+    borderRadius: 12, alignItems: 'center',
+  },
+  modalSaveText: { fontSize: 16, fontWeight: '700' },
 });

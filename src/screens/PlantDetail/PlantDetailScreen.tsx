@@ -33,6 +33,7 @@ const ENTRY_TYPE_CONFIG: Record<JournalEntryType, { icon: string; label: string;
   watering: { icon: '💧', label: 'Rega', color: '#0288D1' },
   nutrition: { icon: '🧪', label: 'Nutrição', color: '#2E7D32' },
   pruning: { icon: '✂️', label: 'Poda', color: '#E65100' },
+  stage_change: { icon: '🔄', label: 'Mudança de estágio', color: '#FF9800' },
 };
 
 const PlantDetailScreen: React.FC<Props> = ({ route, navigation }) => {

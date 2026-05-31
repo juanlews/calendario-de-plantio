@@ -16,6 +16,7 @@ export const ENTRY_CONFIG: Record<string, { icon: string; label: string; color: 
   photo: { icon: '📷', label: 'Foto', color: '#7B1FA2' },
   video: { icon: '🎥', label: 'Vídeo', color: '#C2185B' },
   comment: { icon: '💬', label: 'Comentário', color: '#1565C0' },
+  stage_change: { icon: '🔄', label: 'Mudança de estágio', color: '#FF9800' },
 };
 
 export const STAGE_TO_DOT: Record<string, { key: string; color: string }> = {
@@ -34,6 +35,7 @@ export const ENTRY_TO_DOT: Record<string, { key: string; color: string }> = {
   photo: { key: 'photo', color: '#7B1FA2' },
   video: { key: 'video', color: '#C2185B' },
   comment: { key: 'comment', color: '#1565C0' },
+  stage_change: { key: 'stage_change', color: '#FF9800' },
 };
 
 export const LEGEND_ITEMS = [
@@ -48,4 +50,5 @@ export const LEGEND_ITEMS = [
   { icon: '🧪', label: 'Nutrição', color: '#2E7D32' },
   { icon: '📷', label: 'Foto', color: '#7B1FA2' },
   { icon: '💬', label: 'Comentário', color: '#1565C0' },
+  { icon: '🔄', label: 'Mudança estágio', color: '#FF9800' },
 ];
