@@ -2,7 +2,7 @@
   "expo": {
     "name": "Calendário de Plantio",
     "slug": "calendario-plantio",
-    "version": "0.2.0",
+    "version": "0.2.0-alpha",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
