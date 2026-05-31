@@ -23,7 +23,10 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.juanlews.calendarioplantio",
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,6 +40,12 @@
           "cameraPermission": "O app precisa acessar a câmera para tirar fotos dos seus plantios."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a043c3f4-bfb2-4944-b476-a407351c97dc"
+      }
+    },
+    "owner": "juanlews"
   }
 }
