@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 're
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
 import { Calendar, type DateData } from 'react-native-calendars';
-import { format, parseISO, isValid, addDays, isBefore, eachDayOfInterval, startOfDay } from 'date-fns';
+import { differenceInDays, format, parseISO, isValid, addDays, isBefore, eachDayOfInterval, startOfDay } from 'date-fns';
 import { usePlants } from '../../context/PlantContext';
 import { useSettings } from '../../context/SettingsContext';
 import { daysRemaining, plantDisplayName as plantDisplayNameDefault } from '../../utils/dateUtils';
@@ -126,16 +126,29 @@ const CalendarScreen: React.FC = () => {
     });
 
     const todayISO = format(todayDate, 'yyyy-MM-dd');
-    const todaySelectedColor = theme.colors.primary;
+    const selColor = theme.colors.primary;
+    const isTodaySelected = selectedDate === todayISO;
+
+    // Today: highlight when not selected
     if (marks[todayISO]) {
-      marks[todayISO].selected = true;
-      marks[todayISO].selectedColor = todaySelectedColor;
+      marks[todayISO].selected = isTodaySelected;
+      marks[todayISO].selectedColor = selColor;
     } else {
-      marks[todayISO] = { selected: true, selectedColor: todaySelectedColor, dots: [] };
+      marks[todayISO] = { selected: isTodaySelected, selectedColor: selColor, dots: [] };
+    }
+
+    // Selected day: filled circle highlight
+    if (selectedDate && !isTodaySelected) {
+      if (marks[selectedDate]) {
+        marks[selectedDate].selected = true;
+        marks[selectedDate].selectedColor = selColor;
+      } else {
+        marks[selectedDate] = { selected: true, selectedColor: selColor, dots: [] };
+      }
     }
 
     return marks;
-  }, [plantings, journalEntries, theme.colors.primary]);
+  }, [plantings, journalEntries, selectedDate, theme.colors.primary]);
 
   // Selected day events grouped by plant
   const selectedDayByPlant = useMemo(() => {
@@ -144,13 +157,14 @@ const CalendarScreen: React.FC = () => {
     const groups: Array<{
       displayName: string;
       plantingId: string;
+      ageLabel?: string;
       events: Array<{ label: string; icon: string; color: string; detail?: string; time?: string }>;
     }> = [];
 
-    const getGroup = (displayName: string, plantingId: string) => {
+    const getGroup = (displayName: string, plantingId: string, ageLabel?: string) => {
       let g = groups.find((g) => g.plantingId === plantingId);
       if (!g) {
-        g = { displayName, plantingId, events: [] };
+        g = { displayName, plantingId, ageLabel, events: [] };
         groups.push(g);
       }
       return g;
@@ -158,8 +172,18 @@ const CalendarScreen: React.FC = () => {
 
     plantings.forEach((p) => {
       const name = plantDisplayName(p);
-      const add = (icon: string, label: string, color: string, detail?: string) =>
-        getGroup(name, p.id).events.push({ label, icon, color, detail, time: undefined });
+      const add = (icon: string, label: string, color: string, detail?: string) => {
+        // Calculate plant age: days from seedDate to selectedDate
+        const seed = parseISO(p.seedDate);
+        const sel = parseISO(selectedDate);
+        if (isValid(seed) && isValid(sel)) {
+          const ageDays = differenceInDays(sel, seed);
+          const ageLabel = ageDays >= 0 ? `(${ageDays}d)` : `(${ageDays}d)`;
+          getGroup(name, p.id, ageLabel).events.push({ label, icon, color, detail, time: undefined });
+        } else {
+          getGroup(name, p.id).events.push({ label, icon, color, detail, time: undefined });
+        }
+      };
 
       if (p.seedDate === selectedDate) add('🌱', 'Germinação', '#8BC34A', 'Semente plantada');
       if (p.vegetativeDate === selectedDate) add('☘️', 'Início Vegetativo', '#2196F3');
@@ -175,6 +199,15 @@ const CalendarScreen: React.FC = () => {
         const plant = plantings.find((p) => p.id === e.plantingId);
         const name = plant ? plantDisplayName(plant) : 'Desconhecida';
         const g = getGroup(name, e.plantingId);
+        // Add age label if not present
+        if (plant && !g.ageLabel) {
+          const seed = parseISO(plant.seedDate);
+          const sel = parseISO(selectedDate);
+          if (isValid(seed) && isValid(sel)) {
+            const ageDays = differenceInDays(sel, seed);
+            g.ageLabel = `${ageDays}d`;
+          }
+        }
 
         let detail = e.note;
         if (e.type === 'watering' && e.watering) {
@@ -284,7 +317,7 @@ const CalendarScreen: React.FC = () => {
                   style={[styles.plantCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}
                 >
                   <Text style={[styles.plantCardTitle, { color: theme.colors.primary }]}>
-                    {group.displayName}
+                    {group.displayName}{group.ageLabel ? ` ${group.ageLabel}` : ''}
                   </Text>
                   <EventsList
                     events={group.events}
