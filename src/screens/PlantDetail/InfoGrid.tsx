@@ -22,7 +22,6 @@ export const InfoGrid: React.FC<Props> = ({ planting, daysSinceSeed, strainThc, 
       <InfoBlock label="🌺 Dias floração" value={planting.floweringDays > 0 ? `${planting.floweringDays}d` : '—'} theme={theme} />
       <InfoBlock label="🔬 THC" value={strainThc} theme={theme} />
       <InfoBlock label="📦 Qty" value={planting.quantity > 1 ? `${planting.quantity} plantas` : '1 planta'} theme={theme} />
-      <InfoBlock label="🗓️ Est. colheita" value={planting.expectedHarvestDate ? formatDate(planting.expectedHarvestDate) : '—'} theme={theme} />
     </View>
   );
 };

@@ -116,12 +116,6 @@ export const PlantCard: React.FC<Props> = ({ item, navigation, theme }) => {
             <Text style={[styles.dateValue, { color: theme.colors.onSurface }]}>{fmtDate(item.harvestDate)}</Text>
           </View>
         )}
-        {!item.floweringDate && item.expectedHarvestDate && (
-          <View style={styles.dateCol}>
-            <Text style={[styles.dateLabel, { color: theme.colors.onSurfaceVariant }]}>🗓️ Est. colheita</Text>
-            <Text style={[styles.dateValue, { color: theme.colors.onSurface }]}>{fmtDate(item.expectedHarvestDate)}</Text>
-          </View>
-        )}
       </View>
 
       {/* Advance stage button */}

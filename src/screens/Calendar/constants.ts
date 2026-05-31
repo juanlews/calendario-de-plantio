@@ -43,8 +43,6 @@ export const LEGEND_ITEMS = [
   { icon: '🌺', label: 'Floração', color: '#E91E63' },
   { icon: '🍂', label: 'Secagem', color: '#795548' },
   { icon: '🫙', label: 'Cura', color: '#FF9800' },
-  { icon: '🌸', label: 'Flora esp.', color: '#9C27B0' },
-  { icon: '📦', label: 'Colheita esp.', color: '#FF9800' },
   { icon: '💧', label: 'Rega', color: '#0288D1' },
   { icon: '✂️', label: 'Poda', color: '#E65100' },
   { icon: '🧪', label: 'Nutrição', color: '#2E7D32' },

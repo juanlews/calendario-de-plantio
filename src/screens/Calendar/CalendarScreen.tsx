@@ -101,8 +101,6 @@ const CalendarScreen: React.FC = () => {
         );
       }
 
-      if (p.expectedFloweringDate) addDot(p.expectedFloweringDate, 'exp-flower', '#9C27B0');
-      if (p.expectedHarvestDate) addDot(p.expectedHarvestDate, 'exp-harvest', '#FF9800');
     });
 
     journalEntries.forEach((entry) => {
@@ -155,8 +153,6 @@ const CalendarScreen: React.FC = () => {
       if (p.vegetativeDate === selectedDate) add('☘️', 'Início Vegetativo', '#2196F3');
       if (p.floweringDate === selectedDate) add('🌺', 'Início Floração', '#E91E63');
       if (p.harvestDate === selectedDate) add('✂️', 'Colheita', '#795548');
-      if (p.expectedFloweringDate === selectedDate) add('🌸', 'Floração esperada', '#9C27B0');
-      if (p.expectedHarvestDate === selectedDate) add('📦', 'Colheita esperada', '#FF9800');
     });
 
     journalEntries
@@ -200,8 +196,6 @@ const CalendarScreen: React.FC = () => {
         const d = daysRemaining(dateStr);
         if (d >= 0 && d <= 45) events.push({ plantName: displayName, label, icon, color, days: d });
       };
-      check(p.expectedFloweringDate, 'Floração esperada', '🌸', '#9C27B0');
-      check(p.expectedHarvestDate, 'Colheita esperada', '📦', '#FF9800');
       check(p.floweringDate, 'Início floração', '🌺', '#E91E63');
       check(p.harvestDate, 'Colheita', '✂️', '#795548');
       if (daysRemaining(p.seedDate) === 0) events.push({ plantName: displayName, label: 'Semeadura', icon: '🌱', color: '#8BC34A', days: 0 });
