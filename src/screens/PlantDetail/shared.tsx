@@ -96,4 +96,6 @@ export const styles = StyleSheet.create({
     borderRadius: 12, alignItems: 'center',
   },
   modalSaveText: { fontSize: 16, fontWeight: '700' },
+  modalDateLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6, marginTop: 4 },
+  modalDateBtnText: { fontSize: 15, fontWeight: '500' },
 });

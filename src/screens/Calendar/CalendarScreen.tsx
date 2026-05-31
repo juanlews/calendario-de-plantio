@@ -234,18 +234,49 @@ const CalendarScreen: React.FC = () => {
     return groups;
   }, [selectedDate, plantings, journalEntries]);
 
-  // Upcoming events
+  // Upcoming events — includes real dates + projected estimates
   const upcomingEvents = useMemo(() => {
-    const events: Array<{ plantName: string; label: string; icon: string; color: string; days: number }> = [];
+    const events: Array<{ plantName: string; label: string; icon: string; color: string; days: number; projected?: boolean }> = [];
+    const today = startOfDay(new Date());
+    const todayStr = format(today, 'yyyy-MM-dd');
+
     plantings.forEach((p) => {
       const displayName = p.nickname || p.strainName;
-      const check = (dateStr: string | null, label: string, icon: string, color: string) => {
+      const check = (dateStr: string | null, label: string, icon: string, color: string, projected = false) => {
         if (!dateStr) return;
         const d = daysRemaining(dateStr);
-        if (d >= 0 && d <= 45) events.push({ plantName: displayName, label, icon, color, days: d });
+        if (d >= 0 && d <= 45) events.push({ plantName: displayName, label, icon, color, days: d, projected });
       };
+
+      // Real dates (set by stage changes)
       check(p.floweringDate, 'Início floração', '🌺', '#E91E63');
       check(p.harvestDate, 'Colheita', '✂️', '#795548');
+
+      // Projected flowering: if not yet in flowering and no date set, estimate based on strain
+      if (!p.floweringDate && p.currentStage !== 'floração' && p.currentStage !== 'secagem' && p.currentStage !== 'cura') {
+        const seedDateParsed = parseISO(p.seedDate);
+        if (isValid(seedDateParsed) && p.floweringDays > 0) {
+          // Estimate: seedDate + floweringDays (for autos) or seedDate + ~30d veg + floweringDays (for photo)
+          const vegDays = p.floweringType === 'photoperiodic' ? 30 : 0;
+          const projectedFloweringDate = addDays(seedDateParsed, vegDays + p.floweringDays);
+          check(format(projectedFloweringDate, 'yyyy-MM-dd'), 'Floração (est.)', '🌺', '#E91E63', true);
+        }
+      }
+
+      // Projected harvest: if not harvested yet, estimate from flowering
+      if (!p.harvestDate && p.currentStage !== 'secagem' && p.currentStage !== 'cura') {
+        const seedDateParsed = parseISO(p.seedDate);
+        if (isValid(seedDateParsed) && p.floweringDays > 0) {
+          // Estimate: floweringDate (or projected) + floweringDays
+          const floweringBase = p.floweringDate
+            ? parseISO(p.floweringDate)
+            : addDays(seedDateParsed, p.floweringType === 'photoperiodic' ? 30 : 0);
+          const projectedHarvestDate = addDays(floweringBase, p.floweringDays);
+          check(format(projectedHarvestDate, 'yyyy-MM-dd'), 'Colheita (est.)', '📦', '#FF9800', true);
+        }
+      }
+
+      // Show seedDate if it's today
       if (daysRemaining(p.seedDate) === 0) events.push({ plantName: displayName, label: 'Semeadura', icon: '🌱', color: '#8BC34A', days: 0 });
     });
     return events.sort((a, b) => a.days - b.days);

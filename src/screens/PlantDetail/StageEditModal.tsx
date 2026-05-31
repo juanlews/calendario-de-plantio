@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format, parseISO, isValid } from 'date-fns';
 import { usePlants } from '../../context/PlantContext';
 import { addJournalEntry, createJournalEntry } from '../../data/journalStorage';
 import type { GrowthStage } from '../../types/planting';
@@ -11,30 +13,46 @@ const GROWTH_STAGES: GrowthStage[] = ['germinação', 'muda', 'vegetativo', 'flo
 interface Props {
   visible: boolean;
   plantingId: string;
+  seedDate: string;
   currentStage: GrowthStage;
   onClose: () => void;
   theme: any;
 }
 
-export const StageEditModal: React.FC<Props> = ({ visible, plantingId, currentStage, onClose, theme }) => {
+export const StageEditModal: React.FC<Props> = ({ visible, plantingId, seedDate, currentStage, onClose, theme }) => {
   const { updateCurrentStage } = usePlants();
   const [pendingStage, setPendingStage] = useState<GrowthStage | null>(null);
+  const [pendingDate, setPendingDate] = useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const seedDateParsed = parseISO(seedDate);
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const minDate = isValid(seedDateParsed) ? seedDateParsed : new Date();
+  const maxDate = new Date();
+
+  // Display date for the picker label
+  const displayDate = pendingDate
+    ? format(parseISO(pendingDate), 'dd/MM/yyyy')
+    : todayStr.split('-').reverse().join('/');
 
   const handleSave = async () => {
     if (!pendingStage || pendingStage === currentStage) {
       setPendingStage(null);
+      setPendingDate(null);
       onClose();
       return;
     }
     setSaving(true);
     try {
-      // Update plant stage
-      updateCurrentStage(plantingId, pendingStage);
-      // Create journal entry
+      const effectiveDate = pendingDate || todayStr;
+      // Update plant stage with the chosen date
+      updateCurrentStage(plantingId, pendingStage, effectiveDate);
+      // Create journal entry with the effective date
       const entry = createJournalEntry(plantingId, 'stage_change', {
         stageChange: { from: currentStage, to: pendingStage },
-        note: `Estágio alterado: ${stageLabel(currentStage)} → ${stageLabel(pendingStage)}`,
+        note: `Estágio alterado: ${stageLabel(currentStage)} → ${stageLabel(pendingStage)} (${effectiveDate.split('-').reverse().join('/')})`,
+        timestamp: `${effectiveDate}T12:00:00`,
       });
       await addJournalEntry(entry);
     } catch (e) {
@@ -42,12 +60,25 @@ export const StageEditModal: React.FC<Props> = ({ visible, plantingId, currentSt
     }
     setSaving(false);
     setPendingStage(null);
+    setPendingDate(null);
     onClose();
   };
 
   const handleClose = () => {
     setPendingStage(null);
+    setPendingDate(null);
+    setShowDatePicker(false);
     onClose();
+  };
+
+  const handleDateChange = (_event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (selectedDate) {
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      setPendingDate(dateStr);
+    }
   };
 
   const selectedStage = pendingStage ?? currentStage;
@@ -90,6 +121,36 @@ export const StageEditModal: React.FC<Props> = ({ visible, plantingId, currentSt
               )}
             </TouchableOpacity>
           ))}
+
+          {/* ─── Date Picker Section ─── */}
+          {pendingStage && pendingStage !== currentStage && (
+            <View style={{ marginHorizontal: 16, marginTop: 12 }}>
+              <Text style={[styles.modalDateLabel, { color: theme.colors.onSurfaceVariant }]}>
+                📅 Data da mudança
+              </Text>
+              <TouchableOpacity
+                style={[{ borderColor: theme.colors.outlineVariant, backgroundColor: theme.colors.elevation.level1, borderWidth: 1, borderRadius: 10, padding: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={[styles.modalDateBtnText, { color: theme.colors.onSurface }]}>
+                  {displayDate}
+                </Text>
+                <Text style={{ color: theme.colors.primary, fontSize: 16 }}>📆</Text>
+              </TouchableOpacity>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={pendingDate ? parseISO(pendingDate) : maxDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={handleDateChange}
+                  minimumDate={minDate}
+                  maximumDate={maxDate}
+                />
+              )}
+            </View>
+          )}
+
           <TouchableOpacity
             style={[
               styles.modalSaveBtn,

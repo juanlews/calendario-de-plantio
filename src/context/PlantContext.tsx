@@ -10,7 +10,7 @@ interface PlantContextValue {
   updatePlanting: (p: CannabisPlanting) => void;
   deletePlanting: (id: string) => void;
   updateStage: (id: string, floweringDate?: string, harvestDate?: string) => void;
-  updateCurrentStage: (id: string, stage: CannabisPlanting['currentStage']) => void;
+  updateCurrentStage: (id: string, stage: CannabisPlanting['currentStage'], date?: string) => void;
 }
 
 const PlantContext = createContext<PlantContextValue | undefined>(undefined);
@@ -60,11 +60,31 @@ export const PlantProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   }, []);
 
-  const updateCurrentStage = useCallback((id: string, stage: CannabisPlanting['currentStage']) => {
+  const updateCurrentStage = useCallback((id: string, stage: CannabisPlanting['currentStage'], date?: string) => {
     setPlantings((prev) => {
       const updated = prev.map((p) => {
         if (p.id !== id) return p;
-        return { ...p, currentStage: stage };
+        const changes: Partial<CannabisPlanting> = { currentStage: stage };
+        // Set stage date based on which stage we're moving to
+        const effectiveDate = date || new Date().toISOString().split('T')[0];
+        switch (stage) {
+          case 'vegetativo':
+            changes.vegetativeDate = effectiveDate;
+            break;
+          case 'floração':
+            changes.floweringDate = effectiveDate;
+            // If no vegetativeDate yet, set it to seedDate
+            if (!p.vegetativeDate) changes.vegetativeDate = p.seedDate;
+            break;
+          case 'secagem':
+            changes.harvestDate = effectiveDate;
+            break;
+          case 'cura':
+            // harvestDate should already be set when entering secagem, but ensure it
+            if (!p.harvestDate) changes.harvestDate = effectiveDate;
+            break;
+        }
+        return { ...p, ...changes };
       });
       savePlantings(updated);
       return updated;

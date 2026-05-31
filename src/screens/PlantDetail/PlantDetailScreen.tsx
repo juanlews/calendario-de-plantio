@@ -175,6 +175,7 @@ const PlantDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       <StageEditModal
         visible={showStageModal}
         plantingId={plantingId}
+        seedDate={planting.seedDate}
         currentStage={stage}
         onClose={() => setShowStageModal(false)}
         theme={theme}
