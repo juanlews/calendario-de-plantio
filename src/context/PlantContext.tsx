@@ -73,8 +73,7 @@ export const PlantProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             break;
           case 'floração':
             changes.floweringDate = effectiveDate;
-            // If no vegetativeDate yet, set it to seedDate
-            if (!p.vegetativeDate) changes.vegetativeDate = p.seedDate;
+            // Removido para garantir que vegetativeDate só seja definido por transição explícita para estágio 'vegetativo'.
             break;
           case 'secagem':
             changes.harvestDate = effectiveDate;

@@ -90,7 +90,7 @@ export const createCannabisPlanting = (
     genetics,
     floweringType,
     seedDate,
-    vegetativeDate: seedDate,
+        vegetativeDate: null,
     floweringDate: null,
     harvestDate: null,
     expectedFloweringDate,

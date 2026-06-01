@@ -195,7 +195,7 @@ const CalendarScreen: React.FC = () => {
       };
 
       if (p.seedDate === selectedDate) add('🌱', t('stages.germination'), '#8BC34A', t('calendar.seedDate'));
-      if (p.vegetativeDate === selectedDate) add('☘️', t('calendar.floweringStart'), '#2196F3');
+            if (p.vegetativeDate === selectedDate) add('☘️', t('calendar.vegetative'), '#2196F3');
       if (p.floweringDate === selectedDate) add('🌺', t('calendar.floweringStart'), '#E91E63');
       if (p.harvestDate === selectedDate) add('✂️', t('calendar.harvest'), '#795548');
     });
