@@ -125,11 +125,16 @@ export const DateTimeSelector: React.FC<Props> = ({
         <DateTimePicker
           value={entryDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display="spinner"
           maximumDate={new Date()}
           onChange={(event, selectedDate) => {
-            onShowDatePicker(Platform.OS === 'ios');
-            if (selectedDate) onDateChange(selectedDate);
+            if (Platform.OS === 'android') {
+              onShowDatePicker(false);
+            }
+            if (selectedDate) {
+              const local = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+              onDateChange(local);
+            }
           }}
         />
       )}
@@ -137,9 +142,11 @@ export const DateTimeSelector: React.FC<Props> = ({
         <DateTimePicker
           value={entryDate}
           mode="time"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display="spinner"
           onChange={(event, selectedDate) => {
-            onShowTimePicker(Platform.OS === 'ios');
+            if (Platform.OS === 'android') {
+              onShowTimePicker(false);
+            }
             if (selectedDate) {
               const merged = new Date(entryDate);
               merged.setHours(selectedDate.getHours(), selectedDate.getMinutes());

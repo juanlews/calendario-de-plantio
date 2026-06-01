@@ -73,12 +73,13 @@ export const StageEditModal: React.FC<Props> = ({ visible, plantingId, seedDate,
     onClose();
   };
 
-  const handleDateChange = (_event: any, selectedDate?: Date) => {
+  const handleDateChange = (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
     }
     if (selectedDate) {
-      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      const local = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+      const dateStr = format(local, 'yyyy-MM-dd');
       setPendingDate(dateStr);
     }
   };
@@ -144,7 +145,7 @@ export const StageEditModal: React.FC<Props> = ({ visible, plantingId, seedDate,
                 <DateTimePicker
                   value={pendingDate ? parseISO(pendingDate) : maxDate}
                   mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  display="spinner"
                   onChange={handleDateChange}
                   minimumDate={minDate}
                   maximumDate={maxDate}

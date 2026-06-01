@@ -20,15 +20,14 @@ export const toUtcTimestamp = (date: Date): string => date.toISOString();
 
 /** Format date to DD/MM/YYYY — handles yyyy-MM-dd strings without UTC drift */
 export const formatDate = (dateStr: string): string => {
-  // If it's a plain yyyy-MM-dd date string (no time part), parse as local date
-  // to avoid UTC timezone shift (e.g. 2026-05-31 becoming 30/05 in UTC-3)
-  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (m) {
-    const [, y, mo, d] = m;
-    return `${d}/${mo}/${y}`;
+  // Direct string manipulation to avoid any timezone issues
+  const trimmed = dateStr.trim();
+  const parts = trimmed.split('-');
+  if (parts.length === 3 && parts[0].length === 4) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
-  const date = parseISO(dateStr);
-  if (!isValid(date)) return dateStr;
+  const date = parseISO(trimmed);
+  if (!isValid(date)) return trimmed;
   return format(date, 'dd/MM/yyyy', { locale: ptBR });
 };
 

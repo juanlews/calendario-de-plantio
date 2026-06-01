@@ -211,15 +211,27 @@ const AddPlantingScreen = () => {
                 onPress={() => setShowDatePicker(true)}
               >
                 <Text style={[styles.dateBtnText, { color: theme.colors.onSurface }]}>
-                  {formatDate(toLocalIsoDate(seedDate))}
+                  {(() => {
+                    const iso = toLocalIsoDate(seedDate);
+                    const [y, mo, d] = iso.split('-');
+                    return `${d}/${mo}/${y}`;
+                  })()}
                 </Text>
               </TouchableOpacity>
               {showDatePicker && (
                 <DateTimePicker
                   value={seedDate}
                   mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={(_, d) => { setShowDatePicker(false); if (d) setSeedDate(d); }}
+                  display="spinner"
+                  onChange={(event, d) => {
+                    if (Platform.OS === 'android') {
+                      setShowDatePicker(false);
+                    }
+                    if (d) {
+                      const local = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                      setSeedDate(local);
+                    }
+                  }}
                   maximumDate={new Date()}
                 />
               )}
@@ -232,10 +244,10 @@ const AddPlantingScreen = () => {
               <Text style={[styles.previewTitle, { color: theme.colors.onSecondaryContainer }]}>{t('addPlanting.previewTitle')}</Text>
               <View style={styles.previewRow}>
                 <Text style={[styles.previewLabel, { color: theme.colors.onSecondaryContainer }]}>
-                  {formatDate(toLocalIsoDate(seedDate))}
+                  {(() => { const [y, mo, d] = toLocalIsoDate(seedDate).split('-'); return `${d}/${mo}/${y}`; })()}
                 </Text>
                 <Text style={[styles.previewValue, { color: theme.colors.onSecondaryContainer }]}>
-                  {formatDate(harvestDatePreview)}
+                  {(() => { const [y, mo, d] = harvestDatePreview.split('-'); return `${d}/${mo}/${y}`; })()}
                 </Text>
               </View>
             </View>
