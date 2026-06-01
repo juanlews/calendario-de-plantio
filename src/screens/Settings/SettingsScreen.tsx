@@ -83,8 +83,9 @@ const SelectionModal: React.FC<{
   title: string;
   children: React.ReactNode;
   onCancel: () => void;
+  cancelLabel: string;
   theme: any;
-}> = ({ visible, title, children, onCancel, theme }) => (
+}> = ({ visible, title, children, onCancel, cancelLabel, theme }) => (
   <Modal visible={visible} transparent animationType="slide">
     <View style={styles.modalOverlay}>
       <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
@@ -94,7 +95,7 @@ const SelectionModal: React.FC<{
           style={[styles.modalCancel, { borderTopColor: theme.colors.outlineVariant }]}
           onPress={onCancel}
         >
-          <Text style={[styles.modalCancelText, { color: theme.colors.error }]}>{'Cancelar'}</Text>
+          <Text style={[styles.modalCancelText, { color: theme.colors.error }]}>{cancelLabel}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -209,6 +210,7 @@ const SettingsScreen: React.FC = () => {
           visible={showThemeModal}
           title={t('settings.theme')}
           onCancel={() => setShowThemeModal(false)}
+          cancelLabel={t('journal.cancelBtn')}
           theme={theme}
         >
           <ColorBall />
@@ -256,6 +258,7 @@ const SettingsScreen: React.FC = () => {
           visible={showLangModal}
           title={t('settings.language')}
           onCancel={() => setShowLangModal(false)}
+          cancelLabel={t('journal.cancelBtn')}
           theme={theme}
         >
           {languageOptions.map((opt) => (
@@ -291,6 +294,7 @@ const SettingsScreen: React.FC = () => {
           visible={showDateModal}
           title={t('settings.dateFormat')}
           onCancel={() => setShowDateModal(false)}
+          cancelLabel={t('journal.cancelBtn')}
           theme={theme}
         >
           {dateFormatOptions.map((opt) => (
@@ -327,6 +331,7 @@ const SettingsScreen: React.FC = () => {
           visible={showTimeModal}
           title={t('settings.timeFormat')}
           onCancel={() => setShowTimeModal(false)}
+          cancelLabel={t('journal.cancelBtn')}
           theme={theme}
         >
           {timeFormatOptions.map((opt) => (

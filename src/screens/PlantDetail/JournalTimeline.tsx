@@ -94,9 +94,9 @@ const JournalEntryCard: React.FC<{
         {entry.type === 'watering' && entry.watering && (
           <View style={styles.entryData}>
             {entry.watering.volumeMl && <DataItem label={t('journal.waterAmount')} value={`${entry.watering.volumeMl}ml`} theme={theme} />}
-            {entry.watering.ph != null && <DataItem label="pH" value={`${entry.watering.ph}`} theme={theme} />}
+            {entry.watering.ph != null && <DataItem label={t('journal.phLabel')} value={`${entry.watering.ph}`} theme={theme} />}
             {entry.watering.method && <DataItem label={t('journal.waterMethod')} value={t(`journal.${entry.watering.method === 'Top watering' ? 'methodTopWatering' : entry.watering.method === 'Bottom watering' ? 'methodBottomWatering' : entry.watering.method === 'Foliar spray' ? 'methodFoliar' : 'methodDrip'}`)} theme={theme} />}
-            {entry.watering.runoff && <DataItem label="Runoff" value="Sim" theme={theme} />}
+            {entry.watering.runoff && <DataItem label={t('journal.runoff')} value={t('journal.yes')} theme={theme} />}
           </View>
         )}
 
@@ -104,9 +104,9 @@ const JournalEntryCard: React.FC<{
           <View style={styles.entryData}>
             <DataItem label={t('journal.nutrientBrand')} value={entry.nutrition.product} theme={theme} />
             <DataItem label={t('journal.nutrientDose')} value={`${entry.nutrition.doseMlPerL} ml/L`} theme={theme} />
-            {entry.nutrition.ph != null && <DataItem label="pH" value={`${entry.nutrition.ph}`} theme={theme} />}
-            {entry.nutrition.ec != null && <DataItem label="EC" value={`${entry.nutrition.ec}`} theme={theme} />}
-            {entry.nutrition.type && <DataItem label="Tipo" value={entry.nutrition.type} theme={theme} />}
+            {entry.nutrition.ph != null && <DataItem label={t('journal.phLabel')} value={`${entry.nutrition.ph}`} theme={theme} />}
+            {entry.nutrition.ec != null && <DataItem label={t('journal.ecLabel')} value={`${entry.nutrition.ec}`} theme={theme} />}
+            {entry.nutrition.type && <DataItem label={t('journal.nutritionType')} value={entry.nutrition.type} theme={theme} />}
           </View>
         )}
 

@@ -3,8 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { NumberInput, OptionButtons, SubLabel } from './shared';
 
-const WATERING_METHOD_KEYS = ['methodTopWatering', 'methodDrip', 'methodBottomWatering', 'methodTopWatering', 'methodTopWatering'];
-
 interface Props {
   volume: string;
   onVolumeChange: (v: string) => void;
@@ -25,15 +23,21 @@ export const WateringForm: React.FC<Props> = ({
   theme,
 }) => {
   const { t } = useTranslation();
+  const methodKeys = [
+    'journal.methodTopWatering',
+    'journal.methodDrip',
+    'journal.methodBottomWatering',
+    'journal.methodFoliar',
+  ] as const;
 
   return (
     <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
       <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>{t('journal.watering')}</Text>
       <NumberInput label={t('journal.waterAmount')} value={volume} onChange={onVolumeChange} placeholder={t('journal.waterAmountPlaceholder').replace('e.g. ', '').replace('Ex: ', '')} theme={theme} />
-      <NumberInput label="pH" value={ph} onChange={onPhChange} placeholder="6.5" decimal theme={theme} />
+      <NumberInput label={t('journal.phLabel')} value={ph} onChange={onPhChange} placeholder="6.5" decimal theme={theme} />
       <SubLabel text={t('journal.waterMethod') + ':'} theme={theme} />
       <OptionButtons
-        options={[t('journal.methodTopWatering'), t('journal.methodDrip'), t('journal.methodBottomWatering'), t('journal.methodTopWatering'), t('journal.methodTopWatering')]}
+        options={methodKeys.map((k) => t(k))}
         selected={method}
         onSelect={onMethodChange}
         theme={theme}
@@ -47,7 +51,7 @@ export const WateringForm: React.FC<Props> = ({
         onPress={() => onRunoffChange(!runoff)}
       >
         <Text style={[styles.checkboxText, { color: theme.colors.onSurface }]}>
-          {runoff ? '☑️' : '⬜'} Runoff
+          {runoff ? '☑️' : '⬜'} {t('journal.runoff')}
         </Text>
       </TouchableOpacity>
     </View>

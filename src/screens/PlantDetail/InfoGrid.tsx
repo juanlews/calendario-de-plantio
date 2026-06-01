@@ -21,9 +21,9 @@ export const InfoGrid: React.FC<Props> = ({ planting, daysSinceSeed, strainThc, 
     <View style={[styles.infoGrid, { backgroundColor: theme.colors.surface }]}>
       <InfoBlock label={t('plantDetail.daysSinceSeed')} value={`${Math.max(0, daysSinceSeed)}d`} theme={theme} />
       <InfoBlock label={stageLabel(stage)} value={String(daysInStage(planting.seedDate, planting.floweringDate || undefined))} theme={theme} />
-      <InfoBlock label={t('plantDetail.daysFlowering')} value={planting.floweringDays > 0 ? `${planting.floweringDays}d` : '—'} theme={theme} />
+      <InfoBlock label={t('plantDetail.daysFlowering')} value={planting.floweringDays > 0 ? `${planting.floweringDays}${t('journal.daysSuffix')}` : '—'} theme={theme} />
       <InfoBlock label={t('addPlanting.thc')} value={strainThc} theme={theme} />
-      <InfoBlock label={t('addPlanting.yield')} value={planting.quantity > 1 ? `${planting.quantity} plantas` : '1 planta'} theme={theme} />
+      <InfoBlock label={t('addPlanting.yield')} value={planting.quantity > 1 ? `${planting.quantity} ${t('journal.plants')}` : `1 ${t('journal.plant')}`} theme={theme} />
     </View>
   );
 };
