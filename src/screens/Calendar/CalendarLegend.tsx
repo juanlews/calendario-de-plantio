@@ -11,7 +11,7 @@ export const CalendarLegend: React.FC<Props> = ({ theme }) => (
     <View style={styles.legendGroup}>
       <Text style={[styles.legendGroupTitle, { color: theme.colors.onSurfaceVariant }]}>Estágios</Text>
       <View style={styles.legendRow}>
-        {LEGEND_ITEMS.slice(0, 8).map((item) => (
+        {LEGEND_ITEMS.slice(0, 6).map((item) => (
           <View key={item.label} style={styles.legendChip}>
             <Text style={{ fontSize: 11 }}>{item.icon}</Text>
             <View style={[styles.legendDot, { backgroundColor: item.color }]} />
@@ -23,7 +23,7 @@ export const CalendarLegend: React.FC<Props> = ({ theme }) => (
     <View style={styles.legendGroup}>
       <Text style={[styles.legendGroupTitle, { color: theme.colors.onSurfaceVariant }]}>Registros</Text>
       <View style={styles.legendRow}>
-        {LEGEND_ITEMS.slice(8).map((item) => (
+        {LEGEND_ITEMS.slice(6).map((item) => (
           <View key={item.label} style={styles.legendChip}>
             <Text style={{ fontSize: 11 }}>{item.icon}</Text>
             <View style={[styles.legendDot, { backgroundColor: item.color }]} />
