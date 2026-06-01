@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { FieldInput, OptionButtons, SubLabel } from './shared';
-
-const PRUNING_METHODS = ['Topping', 'Fimming', 'LST', 'HST', 'Defoliação', 'Lollipop', 'Super Cropping', 'ScrOG', 'Outra'];
 
 interface Props {
   method: string;
@@ -16,21 +15,35 @@ export const PruningForm: React.FC<Props> = ({
   method, onMethodChange,
   details, onDetailsChange,
   theme,
-}) => (
-  <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
-    <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>Detalhes da poda</Text>
-    <SubLabel text="Método *:" theme={theme} />
-    <OptionButtons options={PRUNING_METHODS} selected={method} onSelect={onMethodChange} theme={theme} />
-    <FieldInput
-      label="Detalhes"
-      value={details}
-      onChange={onDetailsChange}
-      placeholder="Ex: removi 30% das folhas baixas..."
-      multiline
-      theme={theme}
-    />
-  </View>
-);
+}) => {
+  const { t } = useTranslation();
+  const pruningMethods = [
+    t('journal.typeTopping'),
+    t('journal.typeFIM'),
+    t('journal.typeLST'),
+    t('journal.typeDefoliation'),
+    t('journal.typeLollipop'),
+    t('journal.typeScrOG'),
+    t('journal.typeSuperCropping'),
+    t('journal.typeTopping'),
+  ];
+
+  return (
+    <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
+      <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>{t('journal.pruning')}</Text>
+      <SubLabel text={t('journal.pruningType') + ' *:'} theme={theme} />
+      <OptionButtons options={pruningMethods} selected={method} onSelect={onMethodChange} theme={theme} />
+      <FieldInput
+        label={t('plantDetail.notes')}
+        value={details}
+        onChange={onDetailsChange}
+        placeholder={t('journal.pruningLocationPlaceholder')}
+        multiline
+        theme={theme}
+      />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   fieldGroup: { padding: 16, marginTop: 1 },

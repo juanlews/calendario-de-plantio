@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context/SettingsContext';
 import { useThemeCtx } from '../../theme/ThemeProvider';
 import type { DateFormat, TimeFormat, AppThemeMode } from '../../types/settings';
@@ -11,10 +12,15 @@ import ColorBall from '../../components/ColorBall';
 import TopHeader from '../../components/TopHeader';
 import { styles } from './styles';
 
-const themeOptions: { key: AppThemeMode; label: string; icon: string; desc: string }[] = [
-  { key: 'light', label: 'Claro', icon: 'sunny', desc: 'Tema claro padrão' },
-  { key: 'dark', label: 'Escuro', icon: 'moon', desc: 'Tema escuro para conforto visual' },
-  { key: 'dynamic', label: 'Material You', icon: 'color-palette', desc: 'Cores do sistema Android (fallback verde)' },
+const themeOptions: { key: AppThemeMode; labelKey: string; icon: string; descKey: string }[] = [
+  { key: 'light', labelKey: 'settings.themeLight', icon: 'sunny', descKey: 'settings.themeLight' },
+  { key: 'dark', labelKey: 'settings.themeDark', icon: 'moon', descKey: 'settings.themeDark' },
+  { key: 'dynamic', labelKey: 'settings.themeSystem', icon: 'color-palette', descKey: 'settings.themeSystem' },
+];
+
+const languageOptions: { key: string; labelKey: string }[] = [
+  { key: 'pt', labelKey: 'settings.languagePt' },
+  { key: 'en', labelKey: 'settings.languageEn' },
 ];
 
 const dateFormatOptions: { key: DateFormat; label: string; example: string }[] = [
@@ -24,8 +30,8 @@ const dateFormatOptions: { key: DateFormat; label: string; example: string }[] =
 ];
 
 const timeFormatOptions: { key: TimeFormat; label: string; example: string }[] = [
-  { key: 'HH:mm', label: 'HH:mm', example: '14:30' },
-  { key: 'HH:mm:ss', label: 'HH:mm:ss', example: '14:30:00' },
+  { key: 'HH:mm', label: '24h', example: '14:30' },
+  { key: 'HH:mm:ss', label: '24h', example: '14:30:00' },
 ];
 
 const SettingRow: React.FC<{
@@ -88,7 +94,7 @@ const SelectionModal: React.FC<{
           style={[styles.modalCancel, { borderTopColor: theme.colors.outlineVariant }]}
           onPress={onCancel}
         >
-          <Text style={[styles.modalCancelText, { color: theme.colors.error }]}>Cancelar</Text>
+          <Text style={[styles.modalCancelText, { color: theme.colors.error }]}>{'Cancelar'}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -100,27 +106,35 @@ const SettingsScreen: React.FC = () => {
   const { themeMode } = useThemeCtx();
   const theme = useTheme();
   const systemScheme = useColorScheme();
+  const { t, i18n } = useTranslation();
 
   const [showDateModal, setShowDateModal] = React.useState(false);
   const [showTimeModal, setShowTimeModal] = React.useState(false);
   const [showThemeModal, setShowThemeModal] = React.useState(false);
+  const [showLangModal, setShowLangModal] = React.useState(false);
 
   const timezoneLabel = settings.timezoneMode === 'auto'
-    ? Intl.DateTimeFormat().resolvedOptions().timeZone || 'Automático'
-    : (settings.customTimezone || 'Automático');
+    ? Intl.DateTimeFormat().resolvedOptions().timeZone || t('settings.languageSystem')
+    : (settings.customTimezone || t('settings.languageSystem'));
 
   const isDark = themeMode === 'dark' || (themeMode === 'dynamic' && systemScheme === 'dark');
 
+  const currentThemeOpt = themeOptions.find((o) => o.key === settings.themeMode);
+  const currentThemeLabel = currentThemeOpt ? t(currentThemeOpt.labelKey) : '';
+
+  const currentLangOpt = languageOptions.find((o) => o.key === i18n.language);
+  const currentLangLabel = currentLangOpt ? t(currentLangOpt.labelKey) : t('settings.languageSystem');
+
   return (
     <View style={{ flex: 1 }}>
-      <TopHeader title="Configurações" />
+      <TopHeader title={t('settings.title')} />
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <ScrollView contentContainerStyle={styles.content}>
           {/* ─── Appearance Group ─── */}
-          <SectionGroup title="🎨 Aparência" theme={theme}>
+          <SectionGroup title={t('settings.sectionAppearance')} theme={theme}>
             <SettingRow
-              label="Tema do app"
-              value={themeOptions.find((o) => o.key === settings.themeMode)?.label ?? ''}
+              label={t('settings.theme')}
+              value={currentThemeLabel}
               onPress={() => setShowThemeModal(true)}
               theme={theme}
             />
@@ -132,8 +146,8 @@ const SettingsScreen: React.FC = () => {
                   <Ionicons name="information-circle" size={16} color={isDark ? theme.colors.primary : '#2196F3'} />
                   <Text style={[styles.infoText, { color: isDark ? theme.colors.onSurfaceVariant : '#1565C0' }]}>
                     {Platform.OS === 'android'
-                      ? 'Usando cores dinâmicas do Android (Material You). Se indisponível, usa verde como fallback.'
-                      : 'Material You não disponível neste dispositivo. Usando tema verde como fallback.'}
+                      ? t('settings.themeSystem')
+                      : t('settings.themeSystem')}
                   </Text>
                 </View>
               </>
@@ -141,19 +155,19 @@ const SettingsScreen: React.FC = () => {
           </SectionGroup>
 
           {/* ─── Date & Time Group ─── */}
-          <SectionGroup title="🗓️ Data e Hora" theme={theme}>
+          <SectionGroup title={t('settings.sectionFormats')} theme={theme}>
             <SettingRow
-              label="Fuso horário"
+              label={t('settings.timezone')}
               value={timezoneLabel}
               onPress={() => {}}
-              badge="Automático"
+              badge={t('settings.languageSystem')}
               theme={theme}
             />
 
             <Divider theme={theme} />
 
             <SettingRow
-              label="Formato de data"
+              label={t('settings.dateFormat')}
               value={dateFormatOptions.find((o) => o.key === settings.dateFormat)?.example ?? ''}
               onPress={() => setShowDateModal(true)}
               theme={theme}
@@ -162,27 +176,30 @@ const SettingsScreen: React.FC = () => {
             <Divider theme={theme} />
 
             <SettingRow
-              label="Formato de hora"
+              label={t('settings.timeFormat')}
               value={timeFormatOptions.find((o) => o.key === settings.timeFormat)?.example ?? ''}
               onPress={() => setShowTimeModal(true)}
               theme={theme}
             />
           </SectionGroup>
 
-          {/* ─── Placeholder ─── */}
-          <SectionGroup title="🔧 Em breve" disabled theme={theme}>
+          {/* ─── Language Group ─── */}
+          <SectionGroup title={t('settings.sectionLanguage')} theme={theme}>
+            <SettingRow
+              label={t('settings.language')}
+              value={currentLangLabel}
+              onPress={() => setShowLangModal(true)}
+              theme={theme}
+            />
+          </SectionGroup>
+
+          {/* ─── About ─── */}
+          <SectionGroup title={t('settings.sectionAbout')} disabled theme={theme}>
             <View style={styles.settingRowDisabled}>
               <Text style={[styles.settingLabel, { color: theme.colors.onSurface }]}>
-                Unidades (ml, oz, galões...)
+                {t('settings.appVersion')}
               </Text>
-              <Text style={[styles.comingSoon, { color: theme.colors.onSurfaceVariant }]}>Em breve</Text>
-            </View>
-            <Divider theme={theme} />
-            <View style={styles.settingRowDisabled}>
-              <Text style={[styles.settingLabel, { color: theme.colors.onSurface }]}>
-                Backup e restauração
-              </Text>
-              <Text style={[styles.comingSoon, { color: theme.colors.onSurfaceVariant }]}>Em breve</Text>
+              <Text style={[styles.comingSoon, { color: theme.colors.onSurfaceVariant }]}>v0.2.0-alpha</Text>
             </View>
           </SectionGroup>
         </ScrollView>
@@ -190,7 +207,7 @@ const SettingsScreen: React.FC = () => {
         {/* ─── Theme Modal ─── */}
         <SelectionModal
           visible={showThemeModal}
-          title="Tema do App"
+          title={t('settings.theme')}
           onCancel={() => setShowThemeModal(false)}
           theme={theme}
         >
@@ -223,11 +240,46 @@ const SettingsScreen: React.FC = () => {
                     settings.themeMode === opt.key && { color: theme.colors.primary, fontWeight: '600' },
                   ]}
                 >
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </Text>
-                <Text style={[styles.modalOptionDesc, { color: theme.colors.onSurfaceVariant }]}>{opt.desc}</Text>
+                <Text style={[styles.modalOptionDesc, { color: theme.colors.onSurfaceVariant }]}>{t(opt.descKey)}</Text>
               </View>
               {settings.themeMode === opt.key && (
+                <Text style={[styles.checkmark, { color: theme.colors.primary }]}>✓</Text>
+              )}
+            </TouchableOpacity>
+          ))}
+        </SelectionModal>
+
+        {/* ─── Language Modal ─── */}
+        <SelectionModal
+          visible={showLangModal}
+          title={t('settings.language')}
+          onCancel={() => setShowLangModal(false)}
+          theme={theme}
+        >
+          {languageOptions.map((opt) => (
+            <TouchableOpacity
+              key={opt.key}
+              style={[
+                styles.modalOption,
+                i18n.language === opt.key && { backgroundColor: theme.colors.primaryContainer, borderRadius: 8 },
+              ]}
+              onPress={() => {
+                i18n.changeLanguage(opt.key);
+                setShowLangModal(false);
+              }}
+            >
+              <Text
+                style={[
+                  styles.modalOptionText,
+                  { color: theme.colors.onSurface },
+                  i18n.language === opt.key && { color: theme.colors.primary, fontWeight: '600' },
+                ]}
+              >
+                {t(opt.labelKey)}
+              </Text>
+              {i18n.language === opt.key && (
                 <Text style={[styles.checkmark, { color: theme.colors.primary }]}>✓</Text>
               )}
             </TouchableOpacity>
@@ -237,7 +289,7 @@ const SettingsScreen: React.FC = () => {
         {/* ─── Date Format Modal ─── */}
         <SelectionModal
           visible={showDateModal}
-          title="Formato de Data"
+          title={t('settings.dateFormat')}
           onCancel={() => setShowDateModal(false)}
           theme={theme}
         >
@@ -273,7 +325,7 @@ const SettingsScreen: React.FC = () => {
         {/* ─── Time Format Modal ─── */}
         <SelectionModal
           visible={showTimeModal}
-          title="Formato de Hora"
+          title={t('settings.timeFormat')}
           onCancel={() => setShowTimeModal(false)}
           theme={theme}
         >

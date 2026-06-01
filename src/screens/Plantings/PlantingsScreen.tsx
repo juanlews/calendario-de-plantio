@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { useTheme } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { usePlants } from '../../context/PlantContext';
 import { plantDisplayName as plantDisplayNameDefault } from '../../utils/dateUtils';
 import { useSettings } from '../../context/SettingsContext';
@@ -16,6 +17,7 @@ const PlantingsScreen: React.FC<{ navigation: PlantingsNavProp }> = ({ navigatio
   const { plantings, loading } = usePlants();
   const { formatDate: fmtDate } = useSettings();
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const plantDisplayName = (p: Parameters<typeof plantDisplayNameDefault>[0]) =>
     plantDisplayNameDefault(p, fmtDate);
@@ -49,15 +51,15 @@ const PlantingsScreen: React.FC<{ navigation: PlantingsNavProp }> = ({ navigatio
     return (
       <View style={[styles.empty, { backgroundColor: theme.colors.background }]}>
         <Text style={styles.emptyIcon}>🌱</Text>
-        <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}> Nenhuma planta cadastrada </Text>
-        <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Vá para a aba "Adicionar" para começar seu grow! </Text>
+        <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>{t('plantings.emptyTitle')}</Text>
+        <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>{t('plantings.emptyText')}</Text>
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <TopHeader title="Plantios" />
+      <TopHeader title={t('nav.plantings')} />
       <FlatList
         data={sortedPlantings}
         renderItem={renderPlanting}

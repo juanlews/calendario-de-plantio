@@ -1,4 +1,6 @@
 import React from 'react';
+import { I18nextProvider } from 'react-i18next';
+import i18n from './src/i18n';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -15,6 +17,7 @@ import type { PlantDetailParamList } from './src/screens/PlantDetail';
 import { AddJournalEntryScreen } from './src/screens/AddJournalEntry';
 import { SettingsScreen } from './src/screens/Settings';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 const Tab = createBottomTabNavigator();
 const PlantStack = createNativeStackNavigator<PlantDetailParamList>();
@@ -36,6 +39,7 @@ function PlantingsStack() {
 function TabNavigator() {
   const theme = useTheme();
   const isDark = theme.dark;
+  const { t } = useTranslation();
 
   return (
     <Tab.Navigator
@@ -51,11 +55,11 @@ function TabNavigator() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
 
-          if (route.name === 'Calendário') {
+          if (route.name === 'calendario_tab') {
             iconName = focused ? 'calendar' : 'calendar-outline';
-          } else if (route.name === 'Plantios') {
+          } else if (route.name === 'plantios_tab') {
             iconName = focused ? 'leaf' : 'leaf-outline';
-          } else if (route.name === 'Configurações') {
+          } else if (route.name === 'configuracoes_tab') {
             iconName = focused ? 'settings' : 'settings-outline';
           } else {
             iconName = focused ? 'add-circle' : 'add-circle-outline';
@@ -65,26 +69,28 @@ function TabNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Calendário" component={CalendarScreen} />
-      <Tab.Screen name="Plantios" component={PlantingsStack} />
-      <Tab.Screen name="Adicionar" component={AddPlantingScreen} />
-      <Tab.Screen name="Configurações" component={SettingsScreen} />
+      <Tab.Screen name="calendario_tab" component={CalendarScreen} options={{ tabBarLabel: t('nav.calendar') }} />
+      <Tab.Screen name="plantios_tab" component={PlantingsStack} options={{ tabBarLabel: t('nav.plantings') }} />
+      <Tab.Screen name="adicionar_tab" component={AddPlantingScreen} options={{ tabBarLabel: t('nav.addPlanting') }} />
+      <Tab.Screen name="configuracoes_tab" component={SettingsScreen} options={{ tabBarLabel: t('nav.settings') }} />
     </Tab.Navigator>
   );
 }
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <SettingsProvider>
-        <ThemeProvider>
-          <PlantProvider>
-            <NavigationContainer>
-              <TabNavigator />
-            </NavigationContainer>
-          </PlantProvider>
-        </ThemeProvider>
-      </SettingsProvider>
-    </SafeAreaProvider>
+    <I18nextProvider i18n={i18n}>
+      <SafeAreaProvider>
+        <SettingsProvider>
+          <ThemeProvider>
+            <PlantProvider>
+              <NavigationContainer>
+                <TabNavigator />
+              </NavigationContainer>
+            </PlantProvider>
+          </ThemeProvider>
+        </SettingsProvider>
+      </SafeAreaProvider>
+    </I18nextProvider>
   );
 }

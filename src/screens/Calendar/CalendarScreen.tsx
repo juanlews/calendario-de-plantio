@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { Calendar, type DateData } from 'react-native-calendars';
 import { differenceInDays, format, parseISO, isValid, addDays, isBefore, eachDayOfInterval, startOfDay } from 'date-fns';
 import { usePlants } from '../../context/PlantContext';
@@ -21,6 +22,7 @@ const CalendarScreen: React.FC = () => {
   const { plantings, loading, deletePlanting } = usePlants();
   const { formatDate: fmtDate, formatTime: fmtTime } = useSettings();
   const theme = useTheme();
+  const { t } = useTranslation();
   const plantDisplayName = (p: Parameters<typeof plantDisplayNameDefault>[0]) =>
     plantDisplayNameDefault(p, fmtDate);
 
@@ -185,10 +187,10 @@ const CalendarScreen: React.FC = () => {
         }
       };
 
-      if (p.seedDate === selectedDate) add('🌱', 'Germinação', '#8BC34A', 'Semente plantada');
-      if (p.vegetativeDate === selectedDate) add('☘️', 'Início Vegetativo', '#2196F3');
-      if (p.floweringDate === selectedDate) add('🌺', 'Início Floração', '#E91E63');
-      if (p.harvestDate === selectedDate) add('✂️', 'Colheita', '#795548');
+      if (p.seedDate === selectedDate) add('🌱', t('stages.germination'), '#8BC34A', t('calendar.seedDate'));
+      if (p.vegetativeDate === selectedDate) add('☘️', t('calendar.floweringStart'), '#2196F3');
+      if (p.floweringDate === selectedDate) add('🌺', t('calendar.floweringStart'), '#E91E63');
+      if (p.harvestDate === selectedDate) add('✂️', t('calendar.harvest'), '#795548');
     });
 
     journalEntries
@@ -197,7 +199,7 @@ const CalendarScreen: React.FC = () => {
       .forEach((e) => {
         const cfg = ENTRY_CONFIG[e.type] || { icon: '📝', label: e.type, color: '#666' };
         const plant = plantings.find((p) => p.id === e.plantingId);
-        const name = plant ? plantDisplayName(plant) : 'Desconhecida';
+        const name = plant ? plantDisplayName(plant) : t('plantings.emptyTitle');
         const g = getGroup(name, e.plantingId);
         // Add age label if not present
         if (plant && !g.ageLabel) {
@@ -249,8 +251,8 @@ const CalendarScreen: React.FC = () => {
       };
 
       // Real dates (set by stage changes)
-      check(p.floweringDate, 'Início floração', '🌺', '#E91E63');
-      check(p.harvestDate, 'Colheita', '✂️', '#795548');
+      check(p.floweringDate, t('calendar.floweringStart'), '🌺', '#E91E63');
+      check(p.harvestDate, t('calendar.harvest'), '✂️', '#795548');
 
       // Projected flowering: if not yet in flowering and no date set, estimate based on strain
       if (!p.floweringDate && p.currentStage !== 'floração' && p.currentStage !== 'secagem' && p.currentStage !== 'cura') {
@@ -259,7 +261,7 @@ const CalendarScreen: React.FC = () => {
           // Estimate: seedDate + floweringDays (for autos) or seedDate + ~30d veg + floweringDays (for photo)
           const vegDays = p.floweringType === 'photoperiodic' ? 30 : 0;
           const projectedFloweringDate = addDays(seedDateParsed, vegDays + p.floweringDays);
-          check(format(projectedFloweringDate, 'yyyy-MM-dd'), 'Floração (est.)', '🌺', '#E91E63', true);
+          check(format(projectedFloweringDate, 'yyyy-MM-dd'), t('calendar.floweringEst'), '🌺', '#E91E63', true);
         }
       }
 
@@ -272,12 +274,12 @@ const CalendarScreen: React.FC = () => {
             ? parseISO(p.floweringDate)
             : addDays(seedDateParsed, p.floweringType === 'photoperiodic' ? 30 : 0);
           const projectedHarvestDate = addDays(floweringBase, p.floweringDays);
-          check(format(projectedHarvestDate, 'yyyy-MM-dd'), 'Colheita (est.)', '📦', '#FF9800', true);
+          check(format(projectedHarvestDate, 'yyyy-MM-dd'), t('calendar.harvestEst'), '📦', '#FF9800', true);
         }
       }
 
       // Show seedDate if it's today
-      if (daysRemaining(p.seedDate) === 0) events.push({ plantName: displayName, label: 'Semeadura', icon: '🌱', color: '#8BC34A', days: 0 });
+      if (daysRemaining(p.seedDate) === 0) events.push({ plantName: displayName, label: t('calendar.seedDate'), icon: '🌱', color: '#8BC34A', days: 0 });
     });
     return events.sort((a, b) => a.days - b.days);
   }, [plantings]);
@@ -288,9 +290,9 @@ const CalendarScreen: React.FC = () => {
   }, []);
 
   const handleDelete = useCallback((id: string, p: typeof plantings[0]) => {
-    Alert.alert('Excluir', `Remover "${plantDisplayName(p)}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: () => deletePlanting(id) },
+    Alert.alert(t('plantDetail.deleteTitle'), t('plantDetail.deleteMessage', { name: plantDisplayName(p) }), [
+      { text: t('plantDetail.deleteCancel'), style: 'cancel' },
+      { text: t('plantDetail.deleteConfirm'), style: 'destructive', onPress: () => deletePlanting(id) },
     ]);
   }, [deletePlanting, fmtDate]);
 
@@ -304,7 +306,7 @@ const CalendarScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <TopHeader title="Calendário" />
+      <TopHeader title={t('calendar.title')} />
       <Calendar
         key={`${theme.dark ? 'd' : 'l'}-${theme.colors.primary}`}
         onDayPress={handleDayPress}
@@ -342,7 +344,7 @@ const CalendarScreen: React.FC = () => {
             </Text>
             {selectedDayByPlant.length === 0 ? (
               <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>
-                Nenhum evento nesta data
+                {t('calendar.noEvents')}
               </Text>
             ) : (
               selectedDayByPlant.map((group) => (
@@ -366,7 +368,7 @@ const CalendarScreen: React.FC = () => {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-            📋 Próximos 45 dias ({upcomingEvents.length} eventos)
+            📋 {t('calendar.upcomingTitle')} ({upcomingEvents.length} eventos)
           </Text>
           <UpcomingList events={upcomingEvents} theme={theme} />
         </View>

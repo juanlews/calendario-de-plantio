@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { NumberInput, OptionButtons, SubLabel } from './shared';
 
-const WATERING_METHODS = ['Manual', 'Gotejamento', 'Inundação', 'Regador', 'Outro'];
+const WATERING_METHOD_KEYS = ['methodTopWatering', 'methodDrip', 'methodBottomWatering', 'methodTopWatering', 'methodTopWatering'];
 
 interface Props {
   volume: string;
@@ -22,27 +23,36 @@ export const WateringForm: React.FC<Props> = ({
   method, onMethodChange,
   runoff, onRunoffChange,
   theme,
-}) => (
-  <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
-    <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>Detalhes da rega</Text>
-    <NumberInput label="Volume (ml)" value={volume} onChange={onVolumeChange} placeholder="500" theme={theme} />
-    <NumberInput label="pH da água" value={ph} onChange={onPhChange} placeholder="6.5" decimal theme={theme} />
-    <SubLabel text="Método de rega:" theme={theme} />
-    <OptionButtons options={WATERING_METHODS} selected={method} onSelect={onMethodChange} theme={theme} />
-    <TouchableOpacity
-      style={[
-        styles.checkbox,
-        { borderColor: theme.colors.outlineVariant },
-        runoff && { backgroundColor: theme.colors.primaryContainer },
-      ]}
-      onPress={() => onRunoffChange(!runoff)}
-    >
-      <Text style={[styles.checkboxText, { color: theme.colors.onSurface }]}>
-        {runoff ? '☑️' : '⬜'} Runoff (escoamento)
-      </Text>
-    </TouchableOpacity>
-  </View>
-);
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
+      <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>{t('journal.watering')}</Text>
+      <NumberInput label={t('journal.waterAmount')} value={volume} onChange={onVolumeChange} placeholder={t('journal.waterAmountPlaceholder').replace('e.g. ', '').replace('Ex: ', '')} theme={theme} />
+      <NumberInput label="pH" value={ph} onChange={onPhChange} placeholder="6.5" decimal theme={theme} />
+      <SubLabel text={t('journal.waterMethod') + ':'} theme={theme} />
+      <OptionButtons
+        options={[t('journal.methodTopWatering'), t('journal.methodDrip'), t('journal.methodBottomWatering'), t('journal.methodTopWatering'), t('journal.methodTopWatering')]}
+        selected={method}
+        onSelect={onMethodChange}
+        theme={theme}
+      />
+      <TouchableOpacity
+        style={[
+          styles.checkbox,
+          { borderColor: theme.colors.outlineVariant },
+          runoff && { backgroundColor: theme.colors.primaryContainer },
+        ]}
+        onPress={() => onRunoffChange(!runoff)}
+      >
+        <Text style={[styles.checkboxText, { color: theme.colors.onSurface }]}>
+          {runoff ? '☑️' : '⬜'} Runoff
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   fieldGroup: { padding: 16, marginTop: 1 },

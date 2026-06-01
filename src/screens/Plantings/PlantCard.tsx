@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type { CannabisPlanting } from '../../types/planting';
 import { daysRemaining, stageIcon, stageColor, stageLabel, plantDisplayName as plantDisplayNameDefault, toLocalIsoDate } from '../../utils/dateUtils';
 import { getStrainInfo } from '../../data/strains';
@@ -16,6 +17,7 @@ interface Props {
 export const PlantCard: React.FC<Props> = ({ item, navigation, theme }) => {
   const { deletePlanting, updateStage } = usePlants();
   const { formatDate: fmtDate } = useSettings();
+  const { t } = useTranslation();
   const plantDisplayName = (p: Parameters<typeof plantDisplayNameDefault>[0]) =>
     plantDisplayNameDefault(p, fmtDate);
 
@@ -27,26 +29,26 @@ export const PlantCard: React.FC<Props> = ({ item, navigation, theme }) => {
 
   const handleDelete = () => {
     const displayName = plantDisplayName(item);
-    Alert.alert('Excluir planta', `Remover "${displayName}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: () => deletePlanting(item.id) },
+    Alert.alert(t('plantDetail.deleteTitle'), t('plantDetail.deleteMessage', { name: displayName }), [
+      { text: t('plantDetail.deleteCancel'), style: 'cancel' },
+      { text: t('plantDetail.deleteConfirm'), style: 'destructive', onPress: () => deletePlanting(item.id) },
     ]);
   };
 
   const handleAdvanceStage = () => {
     if (stage === 'vegetativo') {
-      Alert.alert('Iniciar Floração', `Mudar ${item.strainName} para 12/12 agora?`, [
-        { text: 'Cancelar', style: 'cancel' },
+      Alert.alert(t('plantDetail.change1212'), `${item.strainName}?`, [
+        { text: t('plantDetail.deleteCancel'), style: 'cancel' },
         {
-          text: 'Iniciar',
+          text: t('plantDetail.change1212'),
           onPress: () => updateStage(item.id, toLocalIsoDate(new Date())),
         },
       ]);
     } else if (stage === 'floração') {
-      Alert.alert('Colher!', `Colher ${item.strainName} agora?`, [
-        { text: 'Cancelar', style: 'cancel' },
+      Alert.alert(t('plantDetail.harvestNow'), `${item.strainName}?`, [
+        { text: t('plantDetail.deleteCancel'), style: 'cancel' },
         {
-          text: 'Colher',
+          text: t('plantDetail.harvestNow'),
           onPress: () => updateStage(item.id, undefined, toLocalIsoDate(new Date())),
         },
       ]);
@@ -92,27 +94,27 @@ export const PlantCard: React.FC<Props> = ({ item, navigation, theme }) => {
 
       {/* Info grid */}
       <View style={[styles.infoGrid, { borderColor: theme.colors.outlineVariant }]}>
-        <InfoBlock label="Desde semente" value={`${Math.max(0, daysSinceSeed)}d`} theme={theme} />
-        <InfoBlock label="Flora" value={item.floweringDays > 0 ? `${item.floweringDays}d` : (item.floweringType === 'autoflower' ? '~25d' : '—')} theme={theme} />
-        <InfoBlock label="THC" value={info ? `${info.thcMin}-${info.thcMax}%` : '—'} theme={theme} />
-        <InfoBlock label="Yield" value={info?.yield ?? '—'} theme={theme} />
+        <InfoBlock label={t('plantDetail.daysSinceSeed')} value={`${Math.max(0, daysSinceSeed)}d`} theme={theme} />
+        <InfoBlock label={t('plantDetail.daysFlowering')} value={item.floweringDays > 0 ? `${item.floweringDays}d` : (item.floweringType === 'autoflower' ? '~25d' : '—')} theme={theme} />
+        <InfoBlock label={t('addPlanting.thc')} value={info ? `${info.thcMin}-${info.thcMax}%` : '—'} theme={theme} />
+        <InfoBlock label={t('addPlanting.yield')} value={info?.yield ?? '—'} theme={theme} />
       </View>
 
       {/* Dates */}
       <View style={styles.datesRow}>
         <View style={styles.dateCol}>
-          <Text style={[styles.dateLabel, { color: theme.colors.onSurfaceVariant }]}>🌱 Semente</Text>
+          <Text style={[styles.dateLabel, { color: theme.colors.onSurfaceVariant }]}>🌱 {t('stages.seedling')}</Text>
           <Text style={[styles.dateValue, { color: theme.colors.onSurface }]}>{fmtDate(item.seedDate)}</Text>
         </View>
         {item.floweringDate && (
           <View style={styles.dateCol}>
-            <Text style={[styles.dateLabel, { color: theme.colors.onSurfaceVariant }]}>🌺 Floração</Text>
+            <Text style={[styles.dateLabel, { color: theme.colors.onSurfaceVariant }]}>🌺 {t('stages.flowering')}</Text>
             <Text style={[styles.dateValue, { color: theme.colors.onSurface }]}>{fmtDate(item.floweringDate)}</Text>
           </View>
         )}
         {item.harvestDate && (
           <View style={styles.dateCol}>
-            <Text style={[styles.dateLabel, { color: theme.colors.onSurfaceVariant }]}>✂️ Colheita</Text>
+            <Text style={[styles.dateLabel, { color: theme.colors.onSurfaceVariant }]}>✂️ {t('calendar.harvest')}</Text>
             <Text style={[styles.dateValue, { color: theme.colors.onSurface }]}>{fmtDate(item.harvestDate)}</Text>
           </View>
         )}
@@ -125,7 +127,7 @@ export const PlantCard: React.FC<Props> = ({ item, navigation, theme }) => {
           onPress={handleAdvanceStage}
         >
           <Text style={styles.advanceText}>
-            {stage === 'vegetativo' ? '🌺 Mudar para 12/12' : '✂️ Colher agora'}
+            {stage === 'vegetativo' ? t('plantDetail.change1212') : t('plantDetail.harvestNow')}
           </Text>
         </TouchableOpacity>
       )}

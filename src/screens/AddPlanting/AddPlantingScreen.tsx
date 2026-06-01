@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useTheme } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { usePlants } from '../../context/PlantContext';
 import type { StrainInfo, CannabisGenetics, FloweringType } from '../../data/strains';
@@ -37,6 +38,7 @@ const AddPlantingScreen = () => {
   const { addPlanting } = usePlants();
   const { formatDate } = useSettings();
   const theme = useTheme();
+  const { t } = useTranslation();
 
   // Strain selection
   const [searchText, setSearchText] = useState('');
@@ -73,7 +75,7 @@ const AddPlantingScreen = () => {
 
   const handleAdd = () => {
     if (!selectedStrain) {
-      Alert.alert('Atenção', 'Selecione uma strain na lista.');
+      Alert.alert(t('addPlanting.validationStrain'), t('addPlanting.validationStrainMsg'));
       return;
     }
     const seedDateStr = toLocalIsoDate(seedDate);
@@ -103,7 +105,7 @@ const AddPlantingScreen = () => {
     setSelectedStage('germinação');
     setShowModal(false);
 
-    Alert.alert('Sucesso!', `${selectedStrain.name} adicionada ao grow 🌱`);
+    Alert.alert(t('addPlanting.successTitle'), t('addPlanting.successMessage', { strainName: selectedStrain.name }));
   };
 
   const webInputStyle: React.CSSProperties = {
@@ -120,14 +122,14 @@ const AddPlantingScreen = () => {
 
   return (
     <View style={{ flex: 1 }}>
-      <TopHeader title="Adicionar Planta" />
+      <TopHeader title={t('addPlanting.title')} />
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: theme.colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {/* Strain search */}
-          <Text style={[styles.label, { color: theme.colors.onSurface }]}>🌿 Buscar strain</Text>
+          <Text style={[styles.label, { color: theme.colors.onSurface }]}>{t('addPlanting.searchLabel')}</Text>
           <TouchableOpacity
             style={[styles.searchInput, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}
             onPress={() => setShowModal(true)}
@@ -153,7 +155,7 @@ const AddPlantingScreen = () => {
               </View>
             ) : (
               <Text style={[styles.placeholder, { color: theme.colors.onSurfaceVariant }]}>
-                Toque para buscar 8000+ strains...
+                {t('addPlanting.searchPlaceholder')}
               </Text>
             )}
           </TouchableOpacity>
@@ -164,10 +166,10 @@ const AddPlantingScreen = () => {
           )}
 
           {/* Nickname */}
-          <Text style={[styles.label, { color: theme.colors.onSurface }]}>🏷️ Apelido da planta (opcional)</Text>
+          <Text style={[styles.label, { color: theme.colors.onSurface }]}>{t('addPlanting.nicknameLabel')}</Text>
           <TextInput
             style={[styles.nicknameInput, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant, color: theme.colors.onSurface }]}
-            placeholder="Ex: Planta da janela, Armário 1, Mãe #3..."
+            placeholder={t('addPlanting.nicknamePlaceholder')}
             placeholderTextColor={theme.colors.onSurfaceVariant}
             value={nickname}
             onChangeText={setNickname}
@@ -175,7 +177,7 @@ const AddPlantingScreen = () => {
           />
 
           {/* Quantity */}
-          <Text style={[styles.label, { color: theme.colors.onSurface }]}>🌱 Quantidade de plantas</Text>
+          <Text style={[styles.label, { color: theme.colors.onSurface }]}>{t('addPlanting.quantityLabel')}</Text>
           <View style={styles.qtyRow}>
             <TouchableOpacity
               style={[styles.qtyBtn, { backgroundColor: theme.colors.primaryContainer }]}
@@ -193,7 +195,7 @@ const AddPlantingScreen = () => {
           </View>
 
           {/* Seed date */}
-          <Text style={[styles.label, { color: theme.colors.onSurface }]}>🗓️ Data da semente/germinação</Text>
+          <Text style={[styles.label, { color: theme.colors.onSurface }]}>{t('addPlanting.dateLabel')}</Text>
           {Platform.OS === 'web' ? (
             <input
               type="date"
@@ -227,7 +229,7 @@ const AddPlantingScreen = () => {
           {/* Harvest preview */}
           {selectedStrain && harvestDatePreview && (
             <View style={[styles.previewCard, { backgroundColor: theme.colors.secondaryContainer, borderColor: theme.colors.secondary }]}>
-              <Text style={[styles.previewTitle, { color: theme.colors.onSecondaryContainer }]}>📋 Previsão</Text>
+              <Text style={[styles.previewTitle, { color: theme.colors.onSecondaryContainer }]}>{t('addPlanting.previewTitle')}</Text>
               <View style={styles.previewRow}>
                 <Text style={[styles.previewLabel, { color: theme.colors.onSecondaryContainer }]}>
                   {formatDate(toLocalIsoDate(seedDate))}
@@ -240,7 +242,7 @@ const AddPlantingScreen = () => {
           )}
 
           {/* Growth stage */}
-          <Text style={[styles.label, { color: theme.colors.onSurface }]}>🌱 Estágio atual</Text>
+          <Text style={[styles.label, { color: theme.colors.onSurface }]}>{t('addPlanting.stageLabel')}</Text>
           <StageSelector
             selectedStage={selectedStage}
             onSelect={setSelectedStage}
@@ -248,10 +250,10 @@ const AddPlantingScreen = () => {
           />
 
           {/* Notes */}
-          <Text style={[styles.label, { color: theme.colors.onSurface }]}>📝 Observações (opcional)</Text>
+          <Text style={[styles.label, { color: theme.colors.onSurface }]}>{t('addPlanting.notesLabel')}</Text>
           <TextInput
             style={[styles.notesInput, styles.textArea, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant, color: theme.colors.onSurface }]}
-            placeholder="Ex: Indoor, LED 300W, vaso 11L..."
+            placeholder={t('addPlanting.notesPlaceholder')}
             value={notes}
             onChangeText={setNotes}
             multiline
@@ -265,7 +267,7 @@ const AddPlantingScreen = () => {
             disabled={!selectedStrain}
             onPress={handleAdd}
           >
-            <Text style={[styles.submitText, { color: theme.colors.onPrimary }]}>🌱 Adicionar ao grow</Text>
+            <Text style={[styles.submitText, { color: theme.colors.onPrimary }]}>{t('addPlanting.submitBtn')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

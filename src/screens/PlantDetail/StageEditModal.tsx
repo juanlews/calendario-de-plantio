@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, parseISO, isValid } from 'date-fns';
 import { usePlants } from '../../context/PlantContext';
@@ -21,6 +22,7 @@ interface Props {
 
 export const StageEditModal: React.FC<Props> = ({ visible, plantingId, seedDate, currentStage, onClose, theme }) => {
   const { updateCurrentStage } = usePlants();
+  const { t } = useTranslation();
   const [pendingStage, setPendingStage] = useState<GrowthStage | null>(null);
   const [pendingDate, setPendingDate] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -56,7 +58,7 @@ export const StageEditModal: React.FC<Props> = ({ visible, plantingId, seedDate,
       });
       await addJournalEntry(entry);
     } catch (e) {
-      Alert.alert('Erro', 'Não foi possível salvar a mudança de estágio.');
+      Alert.alert(t('journal.validationPhoto'), t('plantDetail.comingSoon'));
     }
     setSaving(false);
     setPendingStage(null);
@@ -88,7 +90,7 @@ export const StageEditModal: React.FC<Props> = ({ visible, plantingId, seedDate,
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
           <View style={[styles.modalHeader, { borderBottomColor: theme.colors.outlineVariant }]}>
-            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Editar Estágio</Text>
+            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>{t('plantDetail.stageEditTitle')}</Text>
             <TouchableOpacity
               onPress={handleClose}
               style={[styles.modalCloseBtn, { backgroundColor: theme.colors.elevation.level2 }]}
@@ -126,7 +128,7 @@ export const StageEditModal: React.FC<Props> = ({ visible, plantingId, seedDate,
           {pendingStage && pendingStage !== currentStage && (
             <View style={{ marginHorizontal: 16, marginTop: 12 }}>
               <Text style={[styles.modalDateLabel, { color: theme.colors.onSurfaceVariant }]}>
-                📅 Data da mudança
+                {t('plantDetail.changeDateLabel')}
               </Text>
               <TouchableOpacity
                 style={[{ borderColor: theme.colors.outlineVariant, backgroundColor: theme.colors.elevation.level1, borderWidth: 1, borderRadius: 10, padding: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
@@ -163,7 +165,7 @@ export const StageEditModal: React.FC<Props> = ({ visible, plantingId, seedDate,
               <ActivityIndicator color={theme.colors.onPrimary} />
             ) : (
               <Text style={[styles.modalSaveText, { color: theme.colors.onPrimary }]}>
-                {pendingStage && pendingStage !== currentStage ? 'Salvar e registrar' : 'Fechar'}
+                {pendingStage && pendingStage !== currentStage ? t('plantDetail.saveAndRegister') : t('plantDetail.close')}
               </Text>
             )}
           </TouchableOpacity>

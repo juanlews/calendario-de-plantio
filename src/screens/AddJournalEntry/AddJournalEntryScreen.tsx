@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform, StyleSheet } from 'react-native';
 import { useTheme } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { PlantDetailParamList } from '../PlantDetail';
 import type { JournalEntryType, WateringData, NutritionData, PruningData } from '../../types/planting';
@@ -20,6 +21,7 @@ type Props = NativeStackScreenProps<PlantDetailParamList, 'AddJournalEntry'>;
 const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
   const { plantingId, entryType } = route.params;
   const theme = useTheme();
+  const { t } = useTranslation();
 
   // Type selection
   const [selectedType, setSelectedType] = useState<JournalEntryType | null>(entryType ?? null);
@@ -56,19 +58,22 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
     if (!selectedType) return;
 
     if ((selectedType === 'photo' || selectedType === 'video') && !selectedMediaUri) {
-      Alert.alert('Erro', selectedType === 'photo' ? 'Selecione ou tire uma foto.' : 'Selecione ou grave um vídeo.');
+      Alert.alert(
+        t('journal.validationPhoto'),
+        selectedType === 'photo' ? t('journal.validationPhotoMsg') : t('journal.validationVideoMsg'),
+      );
       return;
     }
     if (selectedType === 'nutrition' && !nutProduct) {
-      Alert.alert('Erro', 'Informe o produto utilizado');
+      Alert.alert(t('journal.validationPhoto'), t('journal.nutrientBrand'));
       return;
     }
     if (selectedType === 'nutrition' && !nutDose) {
-      Alert.alert('Erro', 'Informe a dose (ml/L)');
+      Alert.alert(t('journal.validationPhoto'), t('journal.nutrientDose'));
       return;
     }
     if (selectedType === 'pruning' && !pruneMethod) {
-      Alert.alert('Erro', 'Selecione o método de poda');
+      Alert.alert(t('journal.validationPhoto'), t('journal.pruningType'));
       return;
     }
 
@@ -154,7 +159,7 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
         {/* Note */}
         <View style={[styles.fieldGroup, { backgroundColor: theme.colors.surface }]}>
           <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>
-            Nota / Observação (opcional)
+            {t('journal.noteLabel')}
           </Text>
           <TextInput
             style={[
@@ -165,7 +170,7 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
                 color: theme.colors.onSurface,
               },
             ]}
-            placeholder="Ex: planta respondendo bem, folhas amarelando..."
+            placeholder={t('journal.notePlaceholder')}
             placeholderTextColor={theme.colors.onSurfaceVariant}
             value={note}
             onChangeText={setNote}
@@ -228,21 +233,21 @@ const AddJournalEntryScreen: React.FC<Props> = ({ route, navigation }) => {
           {saving ? (
             <ActivityIndicator color={theme.colors.onPrimary} />
           ) : (
-            <Text style={[sharedStyles.saveText, { color: theme.colors.onPrimary }]}>💾 Salvar registro</Text>
+            <Text style={[sharedStyles.saveText, { color: theme.colors.onPrimary }]}>{t('journal.submitBtn')}</Text>
           )}
         </TouchableOpacity>
 
         {!entryType && (
           <TouchableOpacity style={sharedStyles.cancelBtn} onPress={() => setSelectedType(null)}>
             <Text style={[sharedStyles.cancelText, { color: theme.colors.onSurfaceVariant }]}>
-              ← Voltar aos tipos
+              ← {t('journal.selectEntryType')}
             </Text>
           </TouchableOpacity>
         )}
         {entryType && (
           <TouchableOpacity style={sharedStyles.cancelBtn} onPress={() => navigation.goBack()}>
             <Text style={[sharedStyles.cancelText, { color: theme.colors.onSurfaceVariant }]}>
-              ✕ Cancelar
+              ✕ {t('journal.cancelBtn')}
             </Text>
           </TouchableOpacity>
         )}

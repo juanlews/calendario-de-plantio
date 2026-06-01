@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, Alert, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 
 interface Props {
@@ -17,6 +18,8 @@ export const MediaPicker: React.FC<Props> = ({
   onMediaRemoved,
   theme,
 }) => {
+  const { t } = useTranslation();
+
   const pickMedia = async (useCamera: boolean) => {
     try {
       let result: ImagePicker.ImagePickerResult;
@@ -24,7 +27,7 @@ export const MediaPicker: React.FC<Props> = ({
       if (useCamera) {
         const cameraPerm = await ImagePicker.requestCameraPermissionsAsync();
         if (!cameraPerm.granted) {
-          Alert.alert('Permissão negada', 'Permita acesso à câmera nas configurações.');
+          Alert.alert(t('journal.validationPhoto'), 'Permita acesso à câmera nas configurações.');
           return;
         }
         result = await (selectedType === 'video'
@@ -41,7 +44,7 @@ export const MediaPicker: React.FC<Props> = ({
       } else {
         const galleryPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!galleryPerm.granted) {
-          Alert.alert('Permissão negada', 'Permita acesso à galeria nas configurações.');
+          Alert.alert(t('journal.validationPhoto'), 'Permita acesso à galeria nas configurações.');
           return;
         }
         result = await (selectedType === 'video'
@@ -61,7 +64,7 @@ export const MediaPicker: React.FC<Props> = ({
       }
     } catch (err) {
       console.error('Erro ao selecionar mídia:', err);
-      Alert.alert('Erro', 'Não foi possível acessar a mídia.');
+      Alert.alert(t('journal.validationPhoto'), t('journal.validationPhotoMsg'));
     }
   };
 
@@ -74,7 +77,7 @@ export const MediaPicker: React.FC<Props> = ({
           <View style={[styles.videoPreview, { backgroundColor: theme.colors.elevation.level1 }]}>
             <Text style={{ fontSize: 48 }}>🎥</Text>
             <Text style={[styles.videoPreviewText, { color: theme.colors.onSurfaceVariant }]}>
-              Vídeo selecionado
+              {t('journal.video')}
             </Text>
           </View>
         )}
@@ -83,7 +86,7 @@ export const MediaPicker: React.FC<Props> = ({
           onPress={onMediaRemoved}
         >
           <Text style={[styles.mediaRemoveText, { color: theme.colors.onErrorContainer }]}>
-            ✕ Remover
+            ✕ {t('journal.deleteBtn')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -105,7 +108,7 @@ export const MediaPicker: React.FC<Props> = ({
       >
         <Text style={styles.mediaBtnIcon}>{selectedType === 'photo' ? '📷' : '🎥'}</Text>
         <Text style={[styles.mediaBtnText, { color: theme.colors.primary }]}>
-          {selectedType === 'photo' ? 'Tirar foto' : 'Gravar vídeo'}
+          {selectedType === 'photo' ? t('journal.takePhoto') : t('journal.recordVideo')}
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -120,7 +123,7 @@ export const MediaPicker: React.FC<Props> = ({
       >
         <Text style={styles.mediaBtnIcon}>🖼️</Text>
         <Text style={[styles.mediaBtnText, { color: theme.colors.onSurfaceVariant }]}>
-          {selectedType === 'photo' ? 'Selecionar da galeria' : 'Selecionar vídeo'}
+          {selectedType === 'photo' ? t('journal.photoLibrary') : t('journal.videoLibrary')}
         </Text>
       </TouchableOpacity>
     </View>

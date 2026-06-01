@@ -2,7 +2,7 @@
   "expo": {
     "name": "Calendário de Plantio",
     "slug": "calendario-plantio",
-    "version": "0.2.0-alpha",
+    "version": "0.3.0-alpha",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -39,7 +39,8 @@
           "photosPermission": "O app precisa acessar suas fotos para registrar o crescimento das plantas.",
           "cameraPermission": "O app precisa acessar a câmera para tirar fotos dos seus plantios."
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "extra": {
       "eas": {
