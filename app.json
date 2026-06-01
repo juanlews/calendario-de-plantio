@@ -2,7 +2,7 @@
   "expo": {
     "name": "Calendário de Plantio",
     "slug": "calendario-plantio",
-    "version": "0.4.0-alpha",
+    "version": "0.5.0-alpha",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -15,7 +15,7 @@
         "backgroundColor": "#2e7d32"
       },
       "package": "com.juanlews.calendarioplantio",
-      "versionCode": 4,
+      "versionCode": 5,
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ]
