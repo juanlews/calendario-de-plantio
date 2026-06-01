@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 're
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { Calendar, type DateData } from 'react-native-calendars';
+import { Calendar, type DateData, LocaleConfig } from 'react-native-calendars';
 import { differenceInDays, format, parseISO, isValid, addDays, isBefore, eachDayOfInterval, startOfDay } from 'date-fns';
 import { usePlants } from '../../context/PlantContext';
 import { useSettings } from '../../context/SettingsContext';
@@ -11,6 +11,8 @@ import { daysRemaining, plantDisplayName as plantDisplayNameDefault } from '../.
 import { loadAllJournalEntries } from '../../data/journalStorage';
 import type { PlantJournalEntry } from '../../types/planting';
 import TopHeader from '../../components/TopHeader';
+import i18n from '../../i18n';
+import { getCalendarLocale, configureCalendarLocale } from './localeConfig';
 import { CalendarLegend } from './CalendarLegend';
 import { EventsList, UpcomingList } from './EventsList';
 import { STAGE_TO_DOT, ENTRY_TO_DOT, ENTRY_CONFIG } from './constants';
@@ -25,6 +27,11 @@ const CalendarScreen: React.FC = () => {
   const { t } = useTranslation();
   const plantDisplayName = (p: Parameters<typeof plantDisplayNameDefault>[0]) =>
     plantDisplayNameDefault(p, fmtDate);
+
+  // Sync calendar locale with current i18n language
+  const currentLang = i18n.language || 'en';
+  const calendarLocale = getCalendarLocale(currentLang);
+  LocaleConfig.defaultLocale = calendarLocale;
 
   const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
   const [selectedDate, setSelectedDate] = useState<string>(() => _selectedDateCache || todayStr);
@@ -308,7 +315,7 @@ const CalendarScreen: React.FC = () => {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <TopHeader title={t('calendar.title')} />
       <Calendar
-        key={`${theme.dark ? 'd' : 'l'}-${theme.colors.primary}`}
+        key={calendarLocale}
         onDayPress={handleDayPress}
         markedDates={markedDates}
         markingType="multi-dot"
