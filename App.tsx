@@ -18,6 +18,7 @@ import { AddJournalEntryScreen } from './src/screens/AddJournalEntry';
 import { SettingsScreen } from './src/screens/Settings';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { UpdateChecker } from './src/components/UpdateChecker';
 
 const Tab = createBottomTabNavigator();
 const PlantStack = createNativeStackNavigator<PlantDetailParamList>();
@@ -77,19 +78,27 @@ function TabNavigator() {
   );
 }
 
+function AppContent() {
+  return (
+    <SettingsProvider>
+      <ThemeProvider>
+        <PlantProvider>
+          <NavigationContainer>
+            <TabNavigator />
+          </NavigationContainer>
+        </PlantProvider>
+      </ThemeProvider>
+    </SettingsProvider>
+  );
+}
+
 export default function App() {
   return (
     <I18nextProvider i18n={i18n}>
       <SafeAreaProvider>
-        <SettingsProvider>
-          <ThemeProvider>
-            <PlantProvider>
-              <NavigationContainer>
-                <TabNavigator />
-              </NavigationContainer>
-            </PlantProvider>
-          </ThemeProvider>
-        </SettingsProvider>
+        <UpdateChecker>
+          <AppContent />
+        </UpdateChecker>
       </SafeAreaProvider>
     </I18nextProvider>
   );

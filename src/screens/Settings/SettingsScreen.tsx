@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, Modal, useColorScheme, Platform,
+  View, Text, ScrollView, TouchableOpacity, Modal, useColorScheme, Platform, Alert, Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
@@ -8,9 +8,11 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context/SettingsContext';
 import { useThemeCtx } from '../../theme/ThemeProvider';
 import type { DateFormat, TimeFormat, AppThemeMode } from '../../types/settings';
+import Constants from 'expo-constants';
 import ColorBall from '../../components/ColorBall';
 import TopHeader from '../../components/TopHeader';
 import { styles } from './styles';
+import { useUpdateCheck } from '../../hooks/useUpdateCheck';
 
 const themeOptions: { key: AppThemeMode; labelKey: string; icon: string; descKey: string }[] = [
   { key: 'light', labelKey: 'settings.themeLight', icon: 'sunny', descKey: 'settings.themeLight' },
@@ -40,11 +42,14 @@ const SettingRow: React.FC<{
   onPress: () => void;
   badge?: string;
   theme: any;
-}> = ({ label, value, onPress, badge, theme }) => (
+  disabled?: boolean;
+  loading?: boolean;
+}> = ({ label, value, onPress, badge, theme, disabled, loading }) => (
   <TouchableOpacity
     style={styles.settingRow}
     onPress={onPress}
     activeOpacity={0.7}
+    disabled={disabled}
   >
     <View style={styles.settingInfo}>
       <Text style={[styles.settingLabel, { color: theme.colors.onSurface }]}>{label}</Text>
@@ -54,6 +59,8 @@ const SettingRow: React.FC<{
       <View style={[styles.autoBadge, { backgroundColor: theme.colors.primaryContainer }]}>
         <Text style={[styles.autoBadgeText, { color: theme.colors.onPrimaryContainer }]}>{badge}</Text>
       </View>
+    ) : loading ? (
+      <Ionicons name="refresh" size={20} color={theme.colors.primary} />
     ) : (
       <Text style={[styles.chevron, { color: theme.colors.outline }]}>›</Text>
     )}
@@ -108,11 +115,16 @@ const SettingsScreen: React.FC = () => {
   const theme = useTheme();
   const systemScheme = useColorScheme();
   const { t, i18n } = useTranslation();
+  const { updateInfo, checking, checkUpdates, showUpdateModal } = useUpdateCheck();
 
   const [showDateModal, setShowDateModal] = React.useState(false);
   const [showTimeModal, setShowTimeModal] = React.useState(false);
   const [showThemeModal, setShowThemeModal] = React.useState(false);
   const [showLangModal, setShowLangModal] = React.useState(false);
+
+  // Get current version from expo-constants
+  const currentVersion = Constants.expoConfig?.version || Constants.manifest?.version || '0.0.0';
+  const versionLabel = `v${currentVersion}`;
 
   const timezoneLabel = settings.timezoneMode === 'auto'
     ? Intl.DateTimeFormat().resolvedOptions().timeZone || t('settings.languageSystem')
@@ -125,6 +137,17 @@ const SettingsScreen: React.FC = () => {
 
   const currentLangOpt = languageOptions.find((o) => o.key === i18n.language);
   const currentLangLabel = currentLangOpt ? t(currentLangOpt.labelKey) : t('settings.languageSystem');
+
+  const handleCheckUpdates = async () => {
+    const result = await checkUpdates(true); // force check
+    if (result.hasUpdate && result.releaseInfo) {
+      showUpdateModal(result.releaseInfo);
+    } else if (!result.hasUpdate) {
+      Alert.alert(t('update.availableTitle'), t('update.noUpdate'));
+    } else if (result.error) {
+      Alert.alert(t('update.error'), result.error);
+    }
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -195,13 +218,30 @@ const SettingsScreen: React.FC = () => {
           </SectionGroup>
 
           {/* ─── About ─── */}
-          <SectionGroup title={t('settings.sectionAbout')} disabled theme={theme}>
-            <View style={styles.settingRowDisabled}>
-              <Text style={[styles.settingLabel, { color: theme.colors.onSurface }]}>
-                {t('settings.appVersion')}
-              </Text>
-              <Text style={[styles.comingSoon, { color: theme.colors.onSurfaceVariant }]}>v0.2.0-alpha</Text>
-            </View>
+          <SectionGroup title={t('settings.sectionAbout')} theme={theme}>
+            <SettingRow
+              label={t('settings.appVersion')}
+              value={versionLabel}
+              onPress={handleCheckUpdates}
+              theme={theme}
+              disabled={checking}
+              loading={checking}
+            />
+
+            {/* Update status indicator */}
+            {updateInfo && !checking && (
+              <View style={styles.updateStatus}>
+                {updateInfo.hasUpdate ? (
+                  <Text style={[styles.updateAvailable, { color: theme.colors.error }]}>
+                    {t('update.availableDesc')} {updateInfo.latestVersion}
+                  </Text>
+                ) : (
+                  <Text style={[styles.updateAvailable, { color: theme.colors.tertiary }]}>
+                    {t('update.noUpdate')}
+                  </Text>
+                )}
+              </View>
+            )}
           </SectionGroup>
         </ScrollView>
 

@@ -36,4 +36,8 @@ export const styles = StyleSheet.create({
   modalCancel: { padding: 16, alignItems: 'center', borderTopWidth: 1, marginTop: 8 },
   modalCancelText: { fontSize: 16, fontWeight: '600' },
   modalDivider: { height: 1, marginVertical: 8, marginHorizontal: 16 },
+
+  // Update status styles
+  updateStatus: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 },
+  updateAvailable: { fontSize: 13, fontWeight: '500' },
 });

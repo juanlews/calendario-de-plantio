@@ -207,5 +207,18 @@
       "24h": "24-hour (HH:mm)",
       "12h": "12-hour (h:mm a)"
     }
+  },
+  "update": {
+    "availableTitle": "Update available",
+    "availableDesc": "A new version of the app is available!",
+    "version": "Version",
+    "download": "Download APK",
+    "openPage": "Open releases page",
+    "later": "Later",
+    "checkUpdates": "Check for updates",
+    "checking": "Checking...",
+    "noUpdate": "You are on the latest version",
+    "error": "Error checking for updates",
+    "visitPage": "Visit the releases page to download"
   }
 }
