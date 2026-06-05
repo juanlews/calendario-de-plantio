@@ -61,3 +61,6 @@ coverage/
 
 # Lock file is tracked but ignore npm cache
 .npm/
+
+# Release docs (internal only)
+RELEASE_TEMPLATE.md
