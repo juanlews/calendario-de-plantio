@@ -114,7 +114,7 @@ const SelectionModal: React.FC<{
 );
 
 const SettingsScreen: React.FC = () => {
-  const { settings, updateSettings, toggleEncryption, isEncryptionReady } = useSettings();
+  const { settings, updateSettings, toggleEncryption, isEncryptionReady, toggleAuth, isAuthReady } = useSettings();
   const { themeMode } = useThemeCtx();
   const theme = useTheme();
   const systemScheme = useColorScheme();
@@ -128,6 +128,9 @@ const SettingsScreen: React.FC = () => {
   const [showEncryptionModal, setShowEncryptionModal] = React.useState(false);
   const [pendingEncryptionValue, setPendingEncryptionValue] = React.useState<boolean>(false);
   const [encryptionBusy, setEncryptionBusy] = React.useState(false);
+  const [showAuthModal, setShowAuthModal] = React.useState(false);
+  const [pendingAuthValue, setPendingAuthValue] = React.useState<boolean>(false);
+  const [authBusy, setAuthBusy] = React.useState(false);
 
   const currentVersion = Constants.expoConfig?.version || Constants.manifest?.version || '0.0.0';
   const versionLabel = `v${currentVersion}`;
@@ -169,6 +172,23 @@ const SettingsScreen: React.FC = () => {
       Alert.alert(t('settings.encryptError'), t('settings.encryptErrorDesc'));
     } finally {
       setEncryptionBusy(false);
+    }
+  };
+
+  const handleAuthToggle = () => {
+    setPendingAuthValue(!settings.requireAuth);
+    setShowAuthModal(true);
+  };
+
+  const confirmAuthChange = async () => {
+    setAuthBusy(true);
+    try {
+      await toggleAuth(pendingAuthValue);
+      setShowAuthModal(false);
+    } catch (error) {
+      Alert.alert(t('settings.authError'), t('settings.authErrorDesc'));
+    } finally {
+      setAuthBusy(false);
     }
   };
 
@@ -249,6 +269,16 @@ const SettingsScreen: React.FC = () => {
               onPress={handleEncryptionToggle}
               theme={theme}
               disabled={!isEncryptionReady || encryptionBusy}
+            />
+
+            <Divider theme={theme} />
+
+            <SettingRow
+              label={t('settings.requireAuth')}
+              value={settings.requireAuth ? t('settings.enabled') : t('settings.disabled')}
+              onPress={handleAuthToggle}
+              theme={theme}
+              disabled={!isAuthReady || authBusy}
             />
           </SectionGroup>
 
@@ -481,6 +511,36 @@ const SettingsScreen: React.FC = () => {
             >
               <Text style={[styles.modalCancelText, { color: theme.colors.onPrimary }]}>
                 {encryptionBusy ? t('settings.encrypting') : (pendingEncryptionValue ? t('settings.enable') : t('settings.disable'))}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </SelectionModal>
+
+        {/* ─── Auth Confirmation Modal ─── */}
+        <SelectionModal
+          visible={showAuthModal}
+          title={pendingAuthValue ? t('settings.authEnableTitle') : t('settings.authDisableTitle')}
+          onCancel={() => setShowAuthModal(false)}
+          cancelLabel={t('journal.cancelBtn')}
+          theme={theme}
+        >
+          <Text style={[styles.modalOptionDesc, { color: theme.colors.onSurface, marginBottom: 16, textAlign: 'center' }]}>
+            {pendingAuthValue ? t('settings.authEnableDesc') : t('settings.authDisableDesc')}
+          </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 }}>
+            <TouchableOpacity
+              style={[styles.modalCancel, { backgroundColor: theme.colors.surfaceVariant, flex: 1, marginRight: 8 }]}
+              onPress={() => setShowAuthModal(false)}
+            >
+              <Text style={[styles.modalCancelText, { color: theme.colors.onSurface }]}>{t('journal.cancelBtn')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalCancel, { backgroundColor: pendingAuthValue ? theme.colors.primary : theme.colors.error, flex: 1, marginLeft: 8 }]}
+              onPress={confirmAuthChange}
+              disabled={authBusy}
+            >
+              <Text style={[styles.modalCancelText, { color: theme.colors.onPrimary }]}>
+                {authBusy ? t('settings.authenticating') : (pendingAuthValue ? t('settings.enable') : t('settings.disable'))}
               </Text>
             </TouchableOpacity>
           </View>

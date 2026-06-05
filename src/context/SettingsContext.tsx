@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import type { AppSettings, DateFormat, TimeFormat } from '../types/settings';
+import type { AppSettings } from '../types/settings';
 import { DEFAULT_SETTINGS } from '../types/settings';
 import { loadSettings, saveSettings, setEncryptSettingGetter } from '../data/settingsStorage';
 import { setEncryptSettingGetter as setJournalEncryptGetter } from '../data/journalStorage';
 import { setEncryptSettingGetter as setPlantingsEncryptGetter } from '../data/storage';
 import { encryptedStorage, STORAGE_KEYS } from '../data/encryptedStorage';
+import { authenticate as authAuthenticate, getAuthEnabled, setAuthEnabled } from '../utils/auth';
 
 interface SettingsContextValue {
   settings: AppSettings;
@@ -17,6 +18,14 @@ interface SettingsContextValue {
   toggleEncryption: (enabled: boolean) => Promise<void>;
   /** Check if encryption is currently initialized */
   isEncryptionReady: boolean;
+  /** Check if auth is initialized */
+  isAuthReady: boolean;
+  /** Authenticate user (biometric/PIN) */
+  authenticate: () => Promise<{ success: boolean; error?: string }>;
+  /** Check if auth should be required (for app gate) */
+  checkAuthRequired: () => Promise<boolean>;
+  /** Toggle auth requirement with SecureStore sync */
+  toggleAuth: (enabled: boolean) => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextValue | undefined>(undefined);
@@ -30,6 +39,7 @@ export const useSettings = (): SettingsContextValue => {
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isEncryptionReady, setIsEncryptionReady] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   // Provide getter for storage modules
   const getEncryptSetting = useCallback(() => settings.encryptData, [settings.encryptData]);
@@ -40,14 +50,21 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setJournalEncryptGetter(getEncryptSetting);
     setPlantingsEncryptGetter(getEncryptSetting);
 
-    // Load settings and initialize encryption
+    // Load settings and initialize encryption + auth
     const init = async () => {
       const loadedSettings = await loadSettings();
       setSettings(loadedSettings);
       if (loadedSettings.encryptData) {
         await encryptedStorage.init(true);
       }
+      // Check auth enabled state
+      const authEnabled = await getAuthEnabled();
+      if (authEnabled !== loadedSettings.requireAuth) {
+        // Sync if out of sync
+        await setAuthEnabled(loadedSettings.requireAuth);
+      }
       setIsEncryptionReady(true);
+      setIsAuthReady(true);
     };
     init();
   }, [getEncryptSetting]);
@@ -85,6 +102,23 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setIsEncryptionReady(true);
     }
   }, [settings, saveSettings]);
+
+  const toggleAuth = useCallback(async (enabled: boolean) => {
+    if (settings.requireAuth === enabled) return;
+
+    const nextSettings = { ...settings, requireAuth: enabled };
+    setSettings(nextSettings);
+    await saveSettings(nextSettings);
+    await setAuthEnabled(enabled);
+  }, [settings, saveSettings]);
+
+  const authenticate = useCallback(async () => {
+    return authAuthenticate();
+  }, []);
+
+  const checkAuthRequired = useCallback(async () => {
+    return getAuthEnabled();
+  }, []);
 
   const formatDate = useCallback(
     (dateStr: string) => {
@@ -128,8 +162,23 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       formatTime,
       toggleEncryption,
       isEncryptionReady,
+      toggleAuth,
+      isAuthReady,
+      authenticate,
+      checkAuthRequired,
     }),
-    [settings, updateSettings, formatDate, formatTime, toggleEncryption, isEncryptionReady],
+    [
+      settings,
+      updateSettings,
+      formatDate,
+      formatTime,
+      toggleEncryption,
+      isEncryptionReady,
+      toggleAuth,
+      isAuthReady,
+      authenticate,
+      checkAuthRequired,
+    ],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

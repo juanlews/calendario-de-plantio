@@ -10,6 +10,7 @@ export interface AppSettings {
   timeFormat: TimeFormat;
   themeMode: AppThemeMode;
   encryptData: boolean; // Local data encryption (AES-256-GCM)
+  requireAuth: boolean; // Require PIN/biometric to open app
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -18,4 +19,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   timeFormat: 'HH:mm',
   themeMode: 'light',
   encryptData: false,
+  requireAuth: false,
 };

@@ -19,6 +19,7 @@ import { SettingsScreen } from './src/screens/Settings';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { UpdateChecker } from './src/components/UpdateChecker';
+import { AuthGate } from './src/components/AuthGate';
 
 const Tab = createBottomTabNavigator();
 const PlantStack = createNativeStackNavigator<PlantDetailParamList>();
@@ -97,7 +98,9 @@ export default function App() {
     <I18nextProvider i18n={i18n}>
       <SafeAreaProvider>
         <UpdateChecker>
-          <AppContent />
+          <AuthGate>
+            <AppContent />
+          </AuthGate>
         </UpdateChecker>
       </SafeAreaProvider>
     </I18nextProvider>
