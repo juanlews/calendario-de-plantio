@@ -96,18 +96,40 @@ const SelectionModal: React.FC<{
   onCancel: () => void;
   cancelLabel: string;
   theme: any;
-}> = ({ visible, title, children, onCancel, cancelLabel, theme }) => (
+  /** Optional confirm action - renders a confirm button next to cancel */
+  onConfirm?: () => void;
+  confirmLabel?: string;
+  confirmDisabled?: boolean;
+  /** Whether confirm button is destructive (uses error color) */
+  confirmDestructive?: boolean;
+  /** Custom content below title (replaces default cancel button) */
+  footer?: React.ReactNode;
+}> = ({ visible, title, children, onCancel, cancelLabel, theme, onConfirm, confirmLabel, confirmDisabled, confirmDestructive, footer }) => (
   <Modal visible={visible} transparent animationType="slide">
     <View style={styles.modalOverlay}>
       <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
         <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>{title}</Text>
         {children}
-        <TouchableOpacity
-          style={[styles.modalCancel, { borderTopColor: theme.colors.outlineVariant }]}
-          onPress={onCancel}
-        >
-          <Text style={[styles.modalCancelText, { color: theme.colors.error }]}>{cancelLabel}</Text>
-        </TouchableOpacity>
+        {footer ? (
+          footer
+        ) : (
+          <View style={{ flexDirection: 'row', borderTopColor: theme.colors.outlineVariant, borderTopWidth: 1 }}>          <TouchableOpacity
+            style={[styles.modalCancel, { flex: 1, borderRightWidth: 1, borderRightColor: theme.colors.outlineVariant }]}
+            onPress={onCancel}
+          >
+            <Text style={[styles.modalCancelText, { color: theme.colors.error }]}>{cancelLabel}</Text>
+          </TouchableOpacity>
+          {onConfirm && (
+            <TouchableOpacity
+              style={[styles.modalCancel, { flex: 1, backgroundColor: confirmDestructive ? theme.colors.error : theme.colors.primary }]}
+              onPress={onConfirm}
+              disabled={confirmDisabled}
+            >
+              <Text style={[styles.modalCancelText, { color: theme.colors.onPrimary }]}>{confirmLabel}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        )}
       </View>
     </View>
   </Modal>
@@ -492,28 +514,15 @@ const SettingsScreen: React.FC = () => {
           title={pendingEncryptionValue ? t('settings.encryptEnableTitle') : t('settings.encryptDisableTitle')}
           onCancel={() => setShowEncryptionModal(false)}
           cancelLabel={t('journal.cancelBtn')}
+          onConfirm={confirmEncryptionChange}
+          confirmLabel={encryptionBusy ? t('settings.encrypting') : (pendingEncryptionValue ? t('settings.enable') : t('settings.disable'))}
+          confirmDisabled={encryptionBusy}
+          confirmDestructive={!pendingEncryptionValue}
           theme={theme}
         >
           <Text style={[styles.modalOptionDesc, { color: theme.colors.onSurface, marginBottom: 16, textAlign: 'center' }]}>
             {pendingEncryptionValue ? t('settings.encryptEnableDesc') : t('settings.encryptDisableDesc')}
           </Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 }}>
-            <TouchableOpacity
-              style={[styles.modalCancel, { backgroundColor: theme.colors.surfaceVariant, flex: 1, marginRight: 8 }]}
-              onPress={() => setShowEncryptionModal(false)}
-            >
-              <Text style={[styles.modalCancelText, { color: theme.colors.onSurface }]}>{t('journal.cancelBtn')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalCancel, { backgroundColor: pendingEncryptionValue ? theme.colors.primary : theme.colors.error, flex: 1, marginLeft: 8 }]}
-              onPress={confirmEncryptionChange}
-              disabled={encryptionBusy}
-            >
-              <Text style={[styles.modalCancelText, { color: theme.colors.onPrimary }]}>
-                {encryptionBusy ? t('settings.encrypting') : (pendingEncryptionValue ? t('settings.enable') : t('settings.disable'))}
-              </Text>
-            </TouchableOpacity>
-          </View>
         </SelectionModal>
 
         {/* ─── Auth Confirmation Modal ─── */}
@@ -522,28 +531,15 @@ const SettingsScreen: React.FC = () => {
           title={pendingAuthValue ? t('settings.authEnableTitle') : t('settings.authDisableTitle')}
           onCancel={() => setShowAuthModal(false)}
           cancelLabel={t('journal.cancelBtn')}
+          onConfirm={confirmAuthChange}
+          confirmLabel={authBusy ? t('settings.authenticating') : (pendingAuthValue ? t('settings.enable') : t('settings.disable'))}
+          confirmDisabled={authBusy}
+          confirmDestructive={!pendingAuthValue}
           theme={theme}
         >
           <Text style={[styles.modalOptionDesc, { color: theme.colors.onSurface, marginBottom: 16, textAlign: 'center' }]}>
             {pendingAuthValue ? t('settings.authEnableDesc') : t('settings.authDisableDesc')}
           </Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 }}>
-            <TouchableOpacity
-              style={[styles.modalCancel, { backgroundColor: theme.colors.surfaceVariant, flex: 1, marginRight: 8 }]}
-              onPress={() => setShowAuthModal(false)}
-            >
-              <Text style={[styles.modalCancelText, { color: theme.colors.onSurface }]}>{t('journal.cancelBtn')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalCancel, { backgroundColor: pendingAuthValue ? theme.colors.primary : theme.colors.error, flex: 1, marginLeft: 8 }]}
-              onPress={confirmAuthChange}
-              disabled={authBusy}
-            >
-              <Text style={[styles.modalCancelText, { color: theme.colors.onPrimary }]}>
-                {authBusy ? t('settings.authenticating') : (pendingAuthValue ? t('settings.enable') : t('settings.disable'))}
-              </Text>
-            </TouchableOpacity>
-          </View>
         </SelectionModal>
       </View>
     </View>
