@@ -2,7 +2,7 @@
 
 App React Native (Expo) para gerenciar o cultivo de cannabis — da semente à cura.
 
-> **Status:** Alfa (v0.2.0) — funcionalidades em desenvolvimento.
+> **Status:** Alfa (v0.8.0) — funcionalidades em desenvolvimento.
 
 📦 **[Baixar APK na página de Releases](https://github.com/juanlews/calendario-de-plantio/releases)**
 
@@ -30,14 +30,12 @@ App React Native (Expo) para gerenciar o cultivo de cannabis — da semente à c
 - **Próximos 45 dias** — lista de eventos futuros com projeções automáticas (floração e colheita estimadas)
 - **Legendas temáticas** que acompanham o tema ativo
 
-### 🆕 Novidades na v0.2.0
-- **Mudança de estágio no diário** — altere o estágio via modal com date picker; gera registro `stage_change`
-- **Date picker** — data exata da transição (datas passadas, mínimo = data da semente)
-- **Projeções dinâmicas** — floração/colheita estimadas no "Próximos 45 dias" baseado nos `floweringDays`
-- **Refatoração completa** — cada tela é um módulo componentizado com barrel exports
-- **Correção de fuso** — datas com timezone local, sem drift UTC
-- **Highlight visual** — data selecionada e hoje com círculo preenchido
-- **Idade da planta** — `(Xd)` nos cards de evento do calendário
+### 🔄 Atualizações Automáticas (v0.8.0)
+- **Verificação automática no GitHub** — ao abrir o app (uma vez por dia) consulta a API de releases do GitHub
+- **Verificação manual** — botão "Verificar atualizações" em Configurações → Sobre
+- **Modal de atualização** — se houver nova versão, abre modal com link direto para download do APK
+- **Versão dinâmica** — versão lida automaticamente do `app.json` (sem hardcode)
+- **Cache inteligente** — evita verificações repetidas no mesmo dia via `expo-secure-store`
 
 ### 📅 Gestão de Estágios
 - **Modal de edição** com seletor visual + date picker
@@ -50,6 +48,7 @@ App React Native (Expo) para gerenciar o cultivo de cannabis — da semente à c
 - **Formato de data**: DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD
 - **Formato de hora**: HH:mm / HH:mm:ss
 - **Fuso horário** automático (Intl API)
+- **Seção "Sobre"** — versão dinâmica + botão de verificação de atualizações + status da última verificação
 
 ### 🎨 Temas
 - **Material You (Android 12+)** — cores dinâmicas do wallpaper via `react-native-dynamic-theme`
@@ -65,19 +64,80 @@ App React Native (Expo) para gerenciar o cultivo de cannabis — da semente à c
 src/
 ├── components/           # Componentes reutilizáveis
 │   ├── TopHeader.tsx
-│   └── ColorBall.tsx
+│   ├── ColorBall.tsx
+│   └── UpdateChecker.tsx      # Auto-update check on app start
 ├── context/              # React Context (estado global)
+│   ├── PlantContext.tsx
+│   └── SettingsContext.tsx
 ├── data/                 # Camada de dados (strains, storage, settings)
+│   ├── journalStorage.ts
+│   ├── plants.ts
+│   ├── settingsStorage.ts
+│   ├── storage.ts
+│   ├── strains_data.ts
+│   └── strains.ts
+├── hooks/                # Custom hooks
+│   └── useUpdateCheck.ts      # Hook para verificação de updates na UI
+├── i18n/                 # Internacionalização
+│   ├── index.ts
+│   └── resources.ts
 ├── screens/              # Telas do app (componentizadas)
 │   ├── AddJournalEntry/  #   Adicionar registro ao diário
+│   │   ├── AddJournalEntryScreen.tsx
+│   │   ├── DateTimeSelector.tsx
+│   │   ├── EntryTypeSelector.tsx
+│   │   ├── MediaPicker.tsx
+│   │   ├── NutritionForm.tsx
+│   │   ├── PruningForm.tsx
+│   │   ├── WateringForm.tsx
+│   │   ├── shared.tsx
+│   │   └── index.ts
 │   ├── AddPlanting/      #   Adicionar novo plantio
+│   │   ├── AddPlantingScreen.tsx
+│   │   ├── StageSelector.tsx
+│   │   ├── StrainDetailCard.tsx
+│   │   ├── StrainSearchModal.tsx
+│   │   ├── shared.tsx
+│   │   └── index.ts
 │   ├── Calendar/         #   Calendário de eventos
+│   │   ├── CalendarScreen.tsx
+│   │   ├── CalendarLegend.tsx
+│   │   ├── EventsList.tsx
+│   │   ├── constants.ts
+│   │   ├── localeConfig.ts
+│   │   ├── styles.ts
+│   │   └── index.ts
 │   ├── PlantDetail/      #   Detalhes de um plantio
+│   │   ├── PlantDetailScreen.tsx
+│   │   ├── PlantHeader.tsx
+│   │   ├── InfoGrid.tsx
+│   │   ├── JournalTimeline.tsx
+│   │   ├── QuickActions.tsx
+│   │   ├── StageEditModal.tsx
+│   │   ├── shared.tsx
+│   │   └── index.ts
 │   ├── Plantings/        #   Lista de plantios
+│   │   ├── PlantingsScreen.tsx
+│   │   ├── PlantCard.tsx
+│   │   ├── shared.tsx
+│   │   └── index.ts
 │   └── Settings/         #   Configurações do app
+│       ├── SettingsScreen.tsx
+│       ├── SettingRow.tsx
+│       ├── constants.ts
+│       ├── styles.ts
+│       └── index.ts
+├── services/             # Serviços externos
+│   └── updateService.ts        # GitHub API + version comparison
 ├── theme/                # Engine de temas (ThemeProvider, tokens)
+│   ├── ThemeProvider.tsx
+│   └── colors.ts
 ├── types/                # Definições de tipos TypeScript
+│   ├── planting.ts
+│   └── settings.ts
 └── utils/                # Utilitários (datas, estágios, display names)
+    ├── dateUtils.ts
+    └── mediaStorage.ts
 assets/
 ├── cannabis-strains.csv   # Base de dados original
 └── strains_db.json        # Base compactada
@@ -98,6 +158,8 @@ Cada tela segue o padrão: `Screen.tsx` (lógica principal) + sub-componentes + 
 | Persistência | @react-native-async-storage/async-storage |
 | Calendário | react-native-calendars |
 | Formulários | @react-native-community/datetimepicker |
+| Internacionalização | react-i18next |
+| Atualizações | expo-constants, expo-secure-store, GitHub Releases API |
 | Linguagem | TypeScript |
 
 ---
