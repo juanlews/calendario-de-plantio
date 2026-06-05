@@ -1,13 +1,19 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { encryptedStorage, STORAGE_KEYS } from './encryptedStorage';
 import type { PlantJournalEntry } from '../types/planting';
 
-const JOURNAL_KEY = '@grow_journal_v1';
+let getEncryptSetting: () => boolean = () => false;
+
+export const setEncryptSettingGetter = (getter: () => boolean): void => {
+  getEncryptSetting = getter;
+};
+
+const encryptEnabled = (): boolean => getEncryptSetting();
 
 /** Load ALL journal entries (across all plants) */
 export const loadAllJournalEntries = async (): Promise<PlantJournalEntry[]> => {
   try {
-    const data = await AsyncStorage.getItem(JOURNAL_KEY);
-    return data ? JSON.parse(data) : [];
+    const data = await encryptedStorage.getItem<PlantJournalEntry[]>(STORAGE_KEYS.JOURNAL, encryptEnabled());
+    return data ?? [];
   } catch {
     return [];
   }
@@ -24,7 +30,7 @@ export const loadJournalEntries = async (plantingId: string): Promise<PlantJourn
 /** Save all journal entries */
 const saveAllJournalEntries = async (entries: PlantJournalEntry[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(JOURNAL_KEY, JSON.stringify(entries));
+    await encryptedStorage.setItem(STORAGE_KEYS.JOURNAL, entries, encryptEnabled());
   } catch (error) {
     console.error('Erro ao salvar diário:', error);
   }

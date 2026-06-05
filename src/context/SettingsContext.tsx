@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import type { AppSettings, DateFormat, TimeFormat } from '../types/settings';
 import { DEFAULT_SETTINGS } from '../types/settings';
-import { loadSettings, saveSettings } from '../data/settingsStorage';
+import { loadSettings, saveSettings, setEncryptSettingGetter } from '../data/settingsStorage';
+import { setEncryptSettingGetter as setJournalEncryptGetter } from '../data/journalStorage';
+import { setEncryptSettingGetter as setPlantingsEncryptGetter } from '../data/storage';
+import { encryptedStorage, STORAGE_KEYS } from '../data/encryptedStorage';
 
 interface SettingsContextValue {
   settings: AppSettings;
@@ -10,6 +13,10 @@ interface SettingsContextValue {
   formatDate: (dateStr: string) => string;
   /** Format a time string for display using current timeFormat setting */
   formatTime: (isoTimestamp: string) => string;
+  /** Toggle encryption with data migration */
+  toggleEncryption: (enabled: boolean) => Promise<void>;
+  /** Check if encryption is currently initialized */
+  isEncryptionReady: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextValue | undefined>(undefined);
@@ -22,10 +29,28 @@ export const useSettings = (): SettingsContextValue => {
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [isEncryptionReady, setIsEncryptionReady] = useState(false);
+
+  // Provide getter for storage modules
+  const getEncryptSetting = useCallback(() => settings.encryptData, [settings.encryptData]);
 
   useEffect(() => {
-    loadSettings().then(setSettings);
-  }, []);
+    // Set getter for all storage modules
+    setEncryptSettingGetter(getEncryptSetting);
+    setJournalEncryptGetter(getEncryptSetting);
+    setPlantingsEncryptGetter(getEncryptSetting);
+
+    // Load settings and initialize encryption
+    const init = async () => {
+      const loadedSettings = await loadSettings();
+      setSettings(loadedSettings);
+      if (loadedSettings.encryptData) {
+        await encryptedStorage.init(true);
+      }
+      setIsEncryptionReady(true);
+    };
+    init();
+  }, [getEncryptSetting]);
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
     setSettings((prev) => {
@@ -34,6 +59,32 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return next;
     });
   }, []);
+
+  const toggleEncryption = useCallback(async (enabled: boolean) => {
+    const oldEncryptEnabled = settings.encryptData;
+    if (oldEncryptEnabled === enabled) return;
+
+    setIsEncryptionReady(false);
+
+    try {
+      // Migrate all storage keys
+      await Promise.all([
+        encryptedStorage.migrate(STORAGE_KEYS.PLANTINGS, oldEncryptEnabled, enabled),
+        encryptedStorage.migrate(STORAGE_KEYS.SETTINGS, oldEncryptEnabled, enabled),
+        encryptedStorage.migrate(STORAGE_KEYS.JOURNAL, oldEncryptEnabled, enabled),
+      ]);
+
+      // Update setting
+      const nextSettings = { ...settings, encryptData: enabled };
+      setSettings(nextSettings);
+      await saveSettings(nextSettings);
+    } catch (error) {
+      console.error('Encryption migration failed:', error);
+      throw error;
+    } finally {
+      setIsEncryptionReady(true);
+    }
+  }, [settings, saveSettings]);
 
   const formatDate = useCallback(
     (dateStr: string) => {
@@ -75,8 +126,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       updateSettings,
       formatDate,
       formatTime,
+      toggleEncryption,
+      isEncryptionReady,
     }),
-    [settings, updateSettings, formatDate, formatTime],
+    [settings, updateSettings, formatDate, formatTime, toggleEncryption, isEncryptionReady],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

@@ -7,7 +7,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "build:apk": "npx expo prebuild --platform android && cd android && ./gradlew assembleRelease --parallel --max-workers=$(nproc) && cp app/build/outputs/apk/release/app-release.apk ../calendario-plantio-$(awk -F'\"' '/\"version\": \".+\"/{ print $4; exit; }' ../app.json).apk && echo '✅ APK na raiz do projeto'"
+    "build:apk": "npx expo prebuild --platform android && cd android && ./gradlew assembleRelease --parallel --max-workers=$(nproc) && cp app/build/outputs/apk/release/app-release.apk ../calendario-plantio-v$(awk -F'\"' '/\"version\": \".+\"/{ print $4; exit; }' ../app.json).apk && echo '✅ APK na raiz do projeto'"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -20,6 +20,7 @@
     "expo": "^56.0.8",
     "expo-async-storage": "^0.0.0",
     "expo-constants": "~56.0.16",
+    "expo-crypto": "~56.0.4",
     "expo-file-system": "~56.0.7",
     "expo-font": "~56.0.5",
     "expo-image-picker": "~56.0.15",

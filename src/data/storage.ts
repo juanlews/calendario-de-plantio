@@ -1,14 +1,23 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { encryptedStorage, STORAGE_KEYS } from './encryptedStorage';
+import { useSettings } from '../context/SettingsContext';
 import type { CannabisPlanting, CannabisGenetics, FloweringType, GrowthStage } from '../types/planting';
 import { getStrainInfo } from '../data/strains';
 import { calculateStage, addDaysToDate } from '../utils/dateUtils';
 
-const STORAGE_KEY = '@grow_calendar_plantings_v1';
+// We need a way to get settings without hook for use in storage functions
+// This will be set by the SettingsProvider
+let getEncryptSetting: () => boolean = () => false;
+
+export const setEncryptSettingGetter = (getter: () => boolean): void => {
+  getEncryptSetting = getter;
+};
+
+const encryptEnabled = (): boolean => getEncryptSetting();
 
 export const loadPlantings = async (): Promise<CannabisPlanting[]> => {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    const data = await encryptedStorage.getItem<CannabisPlanting[]>(STORAGE_KEYS.PLANTINGS, encryptEnabled());
+    return data ?? [];
   } catch {
     return [];
   }
@@ -16,7 +25,7 @@ export const loadPlantings = async (): Promise<CannabisPlanting[]> => {
 
 export const savePlantings = async (plantings: CannabisPlanting[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(plantings));
+    await encryptedStorage.setItem(STORAGE_KEYS.PLANTINGS, plantings, encryptEnabled());
   } catch (error) {
     console.error('Erro ao salvar plantios:', error);
   }
@@ -44,7 +53,6 @@ export const deletePlanting = async (id: string): Promise<CannabisPlanting[]> =>
 };
 
 function typeColor(genetics: CannabisGenetics, floweringType: FloweringType): string {
-  // Color by genetics
   if (genetics === 'indica') return '#7B1FA2';
   if (genetics === 'sativa') return '#1565C0';
   if (genetics === 'hybrid') return '#2E7D32';
@@ -66,18 +74,14 @@ export const createCannabisPlanting = (
 ): CannabisPlanting => {
   const isAuto = floweringType === 'autoflower';
 
-  // Expected flowering: auto starts flowering ~25 days from seed
-  // Photo needs manual switch, we don't set expected flowering date
   const expectedFloweringDate = isAuto && autoflowerDays
     ? addDaysToDate(seedDate, Math.round(autoflowerDays * 0.7))
     : null;
 
-  // Expected harvest
   let expectedHarvestDate: string | null = null;
   if (isAuto && autoflowerDays) {
     expectedHarvestDate = addDaysToDate(seedDate, autoflowerDays);
   } else if (floweringDays > 0) {
-    // Photo: seed + ~30 days veg + flowering days
     expectedHarvestDate = addDaysToDate(seedDate, 30 + floweringDays);
   }
 
@@ -90,7 +94,7 @@ export const createCannabisPlanting = (
     genetics,
     floweringType,
     seedDate,
-        vegetativeDate: null,
+    vegetativeDate: null,
     floweringDate: null,
     harvestDate: null,
     expectedFloweringDate,

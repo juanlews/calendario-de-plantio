@@ -114,7 +114,7 @@ const SelectionModal: React.FC<{
 );
 
 const SettingsScreen: React.FC = () => {
-  const { settings, updateSettings } = useSettings();
+  const { settings, updateSettings, toggleEncryption, isEncryptionReady } = useSettings();
   const { themeMode } = useThemeCtx();
   const theme = useTheme();
   const systemScheme = useColorScheme();
@@ -125,6 +125,9 @@ const SettingsScreen: React.FC = () => {
   const [showTimeModal, setShowTimeModal] = React.useState(false);
   const [showThemeModal, setShowThemeModal] = React.useState(false);
   const [showLangModal, setShowLangModal] = React.useState(false);
+  const [showEncryptionModal, setShowEncryptionModal] = React.useState(false);
+  const [pendingEncryptionValue, setPendingEncryptionValue] = React.useState<boolean>(false);
+  const [encryptionBusy, setEncryptionBusy] = React.useState(false);
 
   const currentVersion = Constants.expoConfig?.version || Constants.manifest?.version || '0.0.0';
   const versionLabel = `v${currentVersion}`;
@@ -149,6 +152,23 @@ const SettingsScreen: React.FC = () => {
       Alert.alert(t('update.availableTitle'), t('update.noUpdate'));
     } else if (result.error) {
       Alert.alert(t('update.error'), result.error);
+    }
+  };
+
+  const handleEncryptionToggle = () => {
+    setPendingEncryptionValue(!settings.encryptData);
+    setShowEncryptionModal(true);
+  };
+
+  const confirmEncryptionChange = async () => {
+    setEncryptionBusy(true);
+    try {
+      await toggleEncryption(pendingEncryptionValue);
+      setShowEncryptionModal(false);
+    } catch (error) {
+      Alert.alert(t('settings.encryptError'), t('settings.encryptErrorDesc'));
+    } finally {
+      setEncryptionBusy(false);
     }
   };
 
@@ -218,6 +238,17 @@ const SettingsScreen: React.FC = () => {
               value={currentLangLabel}
               onPress={() => setShowLangModal(true)}
               theme={theme}
+            />
+          </SectionGroup>
+
+          {/* ─── Security Group ─── */}
+          <SectionGroup title={t('settings.sectionSecurity')} theme={theme}>
+            <SettingRow
+              label={t('settings.encryptData')}
+              value={settings.encryptData ? t('settings.enabled') : t('settings.disabled')}
+              onPress={handleEncryptionToggle}
+              theme={theme}
+              disabled={!isEncryptionReady || encryptionBusy}
             />
           </SectionGroup>
 
@@ -423,6 +454,36 @@ const SettingsScreen: React.FC = () => {
               )}
             </TouchableOpacity>
           ))}
+        </SelectionModal>
+
+        {/* ─── Encryption Confirmation Modal ─── */}
+        <SelectionModal
+          visible={showEncryptionModal}
+          title={pendingEncryptionValue ? t('settings.encryptEnableTitle') : t('settings.encryptDisableTitle')}
+          onCancel={() => setShowEncryptionModal(false)}
+          cancelLabel={t('journal.cancelBtn')}
+          theme={theme}
+        >
+          <Text style={[styles.modalOptionDesc, { color: theme.colors.onSurface, marginBottom: 16, textAlign: 'center' }]}>
+            {pendingEncryptionValue ? t('settings.encryptEnableDesc') : t('settings.encryptDisableDesc')}
+          </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 }}>
+            <TouchableOpacity
+              style={[styles.modalCancel, { backgroundColor: theme.colors.surfaceVariant, flex: 1, marginRight: 8 }]}
+              onPress={() => setShowEncryptionModal(false)}
+            >
+              <Text style={[styles.modalCancelText, { color: theme.colors.onSurface }]}>{t('journal.cancelBtn')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalCancel, { backgroundColor: pendingEncryptionValue ? theme.colors.primary : theme.colors.error, flex: 1, marginLeft: 8 }]}
+              onPress={confirmEncryptionChange}
+              disabled={encryptionBusy}
+            >
+              <Text style={[styles.modalCancelText, { color: theme.colors.onPrimary }]}>
+                {encryptionBusy ? t('settings.encrypting') : (pendingEncryptionValue ? t('settings.enable') : t('settings.disable'))}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </SelectionModal>
       </View>
     </View>

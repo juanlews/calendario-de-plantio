@@ -9,6 +9,7 @@ export interface AppSettings {
   dateFormat: DateFormat;
   timeFormat: TimeFormat;
   themeMode: AppThemeMode;
+  encryptData: boolean; // Local data encryption (AES-256-GCM)
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -16,4 +17,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   dateFormat: 'DD/MM/YYYY',
   timeFormat: 'HH:mm',
   themeMode: 'light',
+  encryptData: false,
 };
