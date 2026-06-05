@@ -81,15 +81,9 @@ function TabNavigator() {
 
 function AppContent() {
   return (
-    <SettingsProvider>
-      <ThemeProvider>
-        <PlantProvider>
-          <NavigationContainer>
-            <TabNavigator />
-          </NavigationContainer>
-        </PlantProvider>
-      </ThemeProvider>
-    </SettingsProvider>
+    <NavigationContainer>
+      <TabNavigator />
+    </NavigationContainer>
   );
 }
 
@@ -97,11 +91,17 @@ export default function App() {
   return (
     <I18nextProvider i18n={i18n}>
       <SafeAreaProvider>
-        <UpdateChecker>
-          <AuthGate>
-            <AppContent />
-          </AuthGate>
-        </UpdateChecker>
+        <SettingsProvider>
+          <ThemeProvider>
+            <PlantProvider>
+              <UpdateChecker>
+                <AuthGate>
+                  <AppContent />
+                </AuthGate>
+              </UpdateChecker>
+            </PlantProvider>
+          </ThemeProvider>
+        </SettingsProvider>
       </SafeAreaProvider>
     </I18nextProvider>
   );
