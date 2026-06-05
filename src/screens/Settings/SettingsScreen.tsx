@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, Modal, useColorScheme, Platform, Alert, Linking,
+  View, Text, ScrollView, TouchableOpacity, Modal, useColorScheme, Platform, Alert, Linking, StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
@@ -113,19 +113,19 @@ const SelectionModal: React.FC<{
         {footer ? (
           footer
         ) : (
-          <View style={{ flexDirection: 'row', borderTopColor: theme.colors.outlineVariant, borderTopWidth: 1 }}>          <TouchableOpacity
-            style={[styles.modalCancel, { flex: 1, borderRightWidth: 1, borderRightColor: theme.colors.outlineVariant }]}
+          <View style={[styles.modalFooter, { borderTopColor: theme.colors.outlineVariant }]}>          <TouchableOpacity
+            style={[styles.modalFooterButton, { borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: theme.colors.outlineVariant, backgroundColor: theme.colors.surface }]}
             onPress={onCancel}
           >
-            <Text style={[styles.modalCancelText, { color: theme.colors.error }]}>{cancelLabel}</Text>
+            <Text style={[styles.modalFooterButtonText, { color: theme.colors.error }]}>{cancelLabel}</Text>
           </TouchableOpacity>
           {onConfirm && (
             <TouchableOpacity
-              style={[styles.modalCancel, { flex: 1, backgroundColor: confirmDestructive ? theme.colors.error : theme.colors.primary }]}
+              style={[styles.modalFooterButton, { backgroundColor: confirmDestructive ? theme.colors.error : theme.colors.primary }]}
               onPress={onConfirm}
               disabled={confirmDisabled}
             >
-              <Text style={[styles.modalCancelText, { color: theme.colors.onPrimary }]}>{confirmLabel}</Text>
+              <Text style={[styles.modalFooterButtonText, { color: theme.colors.onPrimary }]}>{confirmLabel}</Text>
             </TouchableOpacity>
           )}
         </View>

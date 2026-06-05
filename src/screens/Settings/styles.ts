@@ -36,6 +36,11 @@ export const styles = StyleSheet.create({
   checkmark: { fontSize: 18, fontWeight: '700' },
   modalCancel: { padding: 16, alignItems: 'center', borderTopWidth: 1, marginTop: 8 },
   modalCancelText: { fontSize: 16, fontWeight: '600' },
+  // New footer styles for confirm/cancel buttons
+  modalFooter: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth },
+  modalFooterButton: { flex: 1, padding: 16, alignItems: 'center', justifyContent: 'center', minHeight: 56 },
+  modalFooterButtonText: { fontSize: 16, fontWeight: '600' },
+  modalFooterDivider: { width: StyleSheet.hairlineWidth },
   modalDivider: { height: 1, marginVertical: 8, marginHorizontal: 16 },
   modalColorBallWrapper: { alignItems: 'center', paddingVertical: 8 },
   colorBallSection: { alignItems: 'center', paddingVertical: 16, marginTop: 8 },
