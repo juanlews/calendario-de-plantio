@@ -196,6 +196,18 @@ npx expo run:android --variant release  # gera APK release
 
 ---
 
+## ☕ Apoie o projeto
+
+Este é um projeto open source mantido no tempo livre. Se o app te ajuda, qualquer apoio faz diferença:
+
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/juanlews?style=for-the-badge&logo=github-sponsors&logoColor=white&color=EA4AAA)](https://github.com/sponsors/juanlews)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Donate-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/lews)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/produtor.lews)
+
+> Obrigado! 💚
+
+---
+
 ## Créditos e Base de Dados
 
 A base de dados de strains foi extraída e adaptada a partir do dataset:

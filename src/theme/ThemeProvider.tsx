@@ -73,6 +73,10 @@ function buildDarkTheme(): MD3Theme {
   };
 }
 
+/** Temas estáticos para previews (ex: modal de seleção) */
+export const staticLightTheme = buildLightTheme();
+export const staticDarkTheme = buildDarkTheme();
+
 /** Merge dynamic color tokens into an MD3 theme object */
 function applyDynamicColors(base: MD3Theme, dyn: Record<string, string>): MD3Theme {
   return {

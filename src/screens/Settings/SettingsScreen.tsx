@@ -6,13 +6,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context/SettingsContext';
-import { useThemeCtx } from '../../theme/ThemeProvider';
+import { useThemeCtx, staticLightTheme, staticDarkTheme } from '../../theme/ThemeProvider';
 import type { DateFormat, TimeFormat, AppThemeMode } from '../../types/settings';
 import Constants from 'expo-constants';
 import ColorBall from '../../components/ColorBall';
 import TopHeader from '../../components/TopHeader';
 import { styles } from './styles';
 import { useUpdateCheck } from '../../hooks/useUpdateCheck';
+import type { MD3Theme } from 'react-native-paper';
 
 const themeOptions: { key: AppThemeMode; labelKey: string; icon: string; descKey: string }[] = [
   { key: 'light', labelKey: 'settings.themeLight', icon: 'sunny', descKey: 'settings.themeLight' },
@@ -44,7 +45,8 @@ const SettingRow: React.FC<{
   theme: any;
   disabled?: boolean;
   loading?: boolean;
-}> = ({ label, value, onPress, badge, theme, disabled, loading }) => (
+  rightElement?: React.ReactNode;
+}> = ({ label, value, onPress, badge, theme, disabled, loading, rightElement }) => (
   <TouchableOpacity
     style={styles.settingRow}
     onPress={onPress}
@@ -55,7 +57,9 @@ const SettingRow: React.FC<{
       <Text style={[styles.settingLabel, { color: theme.colors.onSurface }]}>{label}</Text>
       <Text style={[styles.settingValue, { color: theme.colors.onSurfaceVariant }]}>{value}</Text>
     </View>
-    {badge ? (
+    {rightElement ? (
+      <View style={styles.settingRightElement}>{rightElement}</View>
+    ) : badge ? (
       <View style={[styles.autoBadge, { backgroundColor: theme.colors.primaryContainer }]}>
         <Text style={[styles.autoBadgeText, { color: theme.colors.onPrimaryContainer }]}>{badge}</Text>
       </View>
@@ -122,7 +126,6 @@ const SettingsScreen: React.FC = () => {
   const [showThemeModal, setShowThemeModal] = React.useState(false);
   const [showLangModal, setShowLangModal] = React.useState(false);
 
-  // Get current version from expo-constants
   const currentVersion = Constants.expoConfig?.version || Constants.manifest?.version || '0.0.0';
   const versionLabel = `v${currentVersion}`;
 
@@ -139,7 +142,7 @@ const SettingsScreen: React.FC = () => {
   const currentLangLabel = currentLangOpt ? t(currentLangOpt.labelKey) : t('settings.languageSystem');
 
   const handleCheckUpdates = async () => {
-    const result = await checkUpdates(true); // force check
+    const result = await checkUpdates(true);
     if (result.hasUpdate && result.releaseInfo) {
       showUpdateModal(result.releaseInfo);
     } else if (!result.hasUpdate) {
@@ -161,6 +164,7 @@ const SettingsScreen: React.FC = () => {
               value={currentThemeLabel}
               onPress={() => setShowThemeModal(true)}
               theme={theme}
+              rightElement={<ColorBall size={36} />}
             />
 
             {settings.themeMode === 'dynamic' && (
@@ -253,44 +257,62 @@ const SettingsScreen: React.FC = () => {
           cancelLabel={t('journal.cancelBtn')}
           theme={theme}
         >
-          <ColorBall />
-          <View style={[styles.modalDivider, { backgroundColor: theme.colors.outlineVariant }]} />
-          {themeOptions.map((opt) => (
-            <TouchableOpacity
-              key={opt.key}
-              style={[
-                styles.modalOption,
-                settings.themeMode === opt.key && { backgroundColor: theme.colors.primaryContainer, borderRadius: 8 },
-              ]}
-              onPress={() => {
-                updateSettings({ themeMode: opt.key });
-                setShowThemeModal(false);
-              }}
-            >
-              <View style={styles.modalOptionIcon}>
-                <Ionicons
-                  name={opt.icon as any}
-                  size={22}
-                  color={settings.themeMode === opt.key ? theme.colors.primary : theme.colors.onSurfaceVariant}
-                />
-              </View>
-              <View style={styles.modalOptionTextWrap}>
-                <Text
-                  style={[
-                    styles.modalOptionText,
-                    { color: theme.colors.onSurface },
-                    settings.themeMode === opt.key && { color: theme.colors.primary, fontWeight: '600' },
-                  ]}
-                >
-                  {t(opt.labelKey)}
-                </Text>
-                <Text style={[styles.modalOptionDesc, { color: theme.colors.onSurfaceVariant }]}>{t(opt.descKey)}</Text>
-              </View>
-              {settings.themeMode === opt.key && (
-                <Text style={[styles.checkmark, { color: theme.colors.primary }]}>✓</Text>
-              )}
-            </TouchableOpacity>
-          ))}
+          {themeOptions.map((opt) => {
+            let previewColors: MD3Theme['colors'];
+            let previewIsDark = false;
+            switch (opt.key) {
+              case 'dark':
+                previewColors = staticDarkTheme.colors;
+                previewIsDark = true;
+                break;
+              case 'dynamic':
+                previewColors = isDark ? staticDarkTheme.colors : staticLightTheme.colors;
+                previewIsDark = isDark;
+                break;
+              default:
+                previewColors = staticLightTheme.colors;
+                previewIsDark = false;
+            }
+            return (
+              <TouchableOpacity
+                key={opt.key}
+                style={[
+                  styles.modalOption,
+                  settings.themeMode === opt.key && { backgroundColor: theme.colors.primaryContainer, borderRadius: 8 },
+                ]}
+                onPress={() => {
+                  updateSettings({ themeMode: opt.key });
+                  setShowThemeModal(false);
+                }}
+              >
+                <View style={styles.modalOptionIcon}>
+                  <Ionicons
+                    name={opt.icon as any}
+                    size={22}
+                    color={settings.themeMode === opt.key ? theme.colors.primary : theme.colors.onSurfaceVariant}
+                  />
+                </View>
+                <View style={styles.modalOptionTextWrap}>
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      { color: theme.colors.onSurface },
+                      settings.themeMode === opt.key && { color: theme.colors.primary, fontWeight: '600' },
+                    ]}
+                  >
+                    {t(opt.labelKey)}
+                  </Text>
+                  <Text style={[styles.modalOptionDesc, { color: theme.colors.onSurfaceVariant }]}>{t(opt.descKey)}</Text>
+                </View>
+                <View style={styles.modalOptionColorBall}>
+                  <ColorBall size={32} themeColors={previewColors} isDark={previewIsDark} />
+                </View>
+                {settings.themeMode === opt.key && (
+                  <Text style={[styles.checkmark, { color: theme.colors.primary }]}>✓</Text>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </SelectionModal>
 
         {/* ─── Language Modal ─── */}

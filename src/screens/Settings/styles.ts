@@ -32,10 +32,14 @@ export const styles = StyleSheet.create({
   modalOptionText: { fontSize: 16, fontWeight: '500' },
   modalOptionDesc: { fontSize: 12, marginTop: 2 },
   modalExample: { fontSize: 13, marginRight: 12 },
+  modalOptionColorBall: { marginLeft: 8 },
   checkmark: { fontSize: 18, fontWeight: '700' },
   modalCancel: { padding: 16, alignItems: 'center', borderTopWidth: 1, marginTop: 8 },
   modalCancelText: { fontSize: 16, fontWeight: '600' },
   modalDivider: { height: 1, marginVertical: 8, marginHorizontal: 16 },
+  modalColorBallWrapper: { alignItems: 'center', paddingVertical: 8 },
+  colorBallSection: { alignItems: 'center', paddingVertical: 16, marginTop: 8 },
+  settingRightElement: { marginLeft: 8, alignItems: 'flex-end' },
 
   // Update status styles
   updateStatus: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 },
