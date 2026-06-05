@@ -70,7 +70,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, onAuthenticated })
     }
   };
 
-  if (!isAuthReady || !showAuth) {
+  if (!isAuthReady) {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -79,7 +79,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, onAuthenticated })
     );
   }
 
-  if (!settings.requireAuth) {
+  if (!showAuth) {
     return <>{children}</>;
   }
 
