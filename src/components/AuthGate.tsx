@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Platform, Alert, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
 import * as LocalAuthentication from 'expo-local-authentication';
+import { LockIcon, type AuthState } from './LockIcon';
+import { CannabisLeafTransition } from './CannabisLeafTransition';
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -19,6 +20,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, onAuthenticated })
   const [authenticating, setAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [biometricType, setBiometricType] = useState<string>('');
+  const [authState, setAuthState] = useState<AuthState>('idle');
+  const [isLocked, setIsLocked] = useState(true); // Cadeado começa FECHADO
+  const [showLeafTransition, setShowLeafTransition] = useState(false);
+  const [transitionComplete, setTransitionComplete] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -53,15 +58,34 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, onAuthenticated })
   const handleAuthenticate = async () => {
     setAuthenticating(true);
     setAuthError(null);
+    setAuthState('loading');
 
     const result = await authenticate();
     if (result.success) {
-      setShowAuth(false);
-      onAuthenticated?.();
+      setAuthenticating(false);
+      setAuthState('idle');
+      // Anima o cadeado abrindo
+      setIsLocked(false);
+      // Aguarda a animação do cadeado abrir (~500ms) e inicia transição da folha
+      setTimeout(() => {
+        setShowLeafTransition(true);
+      }, 500);
     } else {
       setAuthError(result.error || t('auth.authFailed'));
+      setAuthState('error');
       setAuthenticating(false);
+      // Cadeado shake de erro, depois volta para fechado
+      setTimeout(() => {
+        setAuthState('idle');
+        setIsLocked(true);
+      }, 1000);
     }
+  };
+
+  const handleTransitionComplete = () => {
+    setTransitionComplete(true);
+    setShowAuth(false);
+    onAuthenticated?.();
   };
 
   const handleCancel = () => {
@@ -79,14 +103,42 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, onAuthenticated })
     );
   }
 
+  // Se autenticação não é necessária, mostra app direto
   if (!showAuth) {
     return <>{children}</>;
   }
 
+  // Se transição completou, mostra app direto (sem máscara)
+  if (transitionComplete) {
+    return <>{children}</>;
+  }
+
+  // Se transição da folha está ativa, mostra a transição (sem botões de auth)
+  if (showLeafTransition) {
+    return (
+      <CannabisLeafTransition
+        visible={true}
+        onComplete={handleTransitionComplete}
+        duration={1200}
+        maskColor={theme.colors.primary}
+      >
+        {children}
+      </CannabisLeafTransition>
+    );
+  }
+
+  // Tela de autenticação (cadeado + botões)
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.authCard, { backgroundColor: theme.colors.surface }]}>
-        <Ionicons name="lock-closed" size={64} color={theme.colors.primary} />
+        <LockIcon
+          locked={isLocked}
+          authState={authState}
+          size={64}
+          color={theme.colors.primary}
+          errorColor={theme.colors.error}
+          loadingColor={theme.colors.tertiary}
+        />
         <Text style={[styles.title, { color: theme.colors.onSurface }]}>{t('auth.authTitle')}</Text>
         <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
           {biometricType
