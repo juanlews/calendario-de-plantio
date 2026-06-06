@@ -212,6 +212,17 @@
     "encryptError": "Encryption error",
     "encryptErrorDesc": "Failed to change encryption setting. Please try again.",
     "requireAuth": "Require authentication on open",
+    "dateFormats": {
+      "DMY": "DD/MM/YYYY",
+      "MDY": "MM/DD/YYYY",
+      "YMD": "YYYY-MM-DD"
+    },
+    "timeFormats": {
+      "24h": "24-hour (HH:mm)",
+      "12h": "12-hour (h:mm a)"
+    }
+  },
+  "auth": {
     "authEnableTitle": "Enable authentication",
     "authEnableDesc": "The app will require PIN, pattern, or biometrics (fingerprint/face) when opened. This adds an extra layer of security beyond encryption.",
     "authDisableTitle": "Disable authentication",
@@ -228,16 +239,7 @@
     "authCancel": "Cancel",
     "authRequired": "Authentication required",
     "authRequiredDesc": "This app requires authentication to access.",
-    "authFailed": "Authentication failed",
-    "dateFormats": {
-      "DMY": "DD/MM/YYYY",
-      "MDY": "MM/DD/YYYY",
-      "YMD": "YYYY-MM-DD"
-    },
-    "timeFormats": {
-      "24h": "24-hour (HH:mm)",
-      "12h": "12-hour (h:mm a)"
-    }
+    "authFailed": "Authentication failed"
   },
   "update": {
     "availableTitle": "Update available",

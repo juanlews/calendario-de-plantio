@@ -212,6 +212,17 @@
     "encryptError": "Erro na criptografia",
     "encryptErrorDesc": "Não foi possível alterar a configuração de criptografia. Tente novamente.",
     "requireAuth": "Exigir autenticação ao abrir",
+    "dateFormats": {
+      "DMY": "DD/MM/YYYY",
+      "MDY": "MM/DD/YYYY",
+      "YMD": "YYYY-MM-DD"
+    },
+    "timeFormats": {
+      "24h": "24 horas (HH:mm)",
+      "12h": "12 horas (h:mm a)"
+    }
+  },
+  "auth": {
     "authEnableTitle": "Ativar autenticação",
     "authEnableDesc": "O app exigirá PIN, padrão ou biometria (digital/face) ao ser aberto. Isso adiciona uma camada extra de segurança além da criptografia.",
     "authDisableTitle": "Desativar autenticação",
@@ -228,16 +239,7 @@
     "authCancel": "Cancelar",
     "authRequired": "Autenticação necessária",
     "authRequiredDesc": "Este app requer autenticação para ser acessado.",
-    "authFailed": "Falha na autenticação",
-    "dateFormats": {
-      "DMY": "DD/MM/YYYY",
-      "MDY": "MM/DD/YYYY",
-      "YMD": "YYYY-MM-DD"
-    },
-    "timeFormats": {
-      "24h": "24 horas (HH:mm)",
-      "12h": "12 horas (h:mm a)"
-    }
+    "authFailed": "Falha na autenticação"
   },
   "update": {
     "availableTitle": "Atualização disponível",
