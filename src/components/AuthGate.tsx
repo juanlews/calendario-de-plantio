@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Platform, Alert, TouchableOpacity } from 'react-native';
-import { useTheme } from 'react-native-paper';
+import { useTheme, MD3Theme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useSettings } from '../context/SettingsContext';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { LockIcon, type AuthState } from './LockIcon';
@@ -12,18 +13,81 @@ interface AuthGateProps {
   onAuthenticated?: () => void;
 }
 
+interface AuthScreenProps {
+  theme: MD3Theme;
+  t: TFunction;
+  biometricType: string;
+  authState: AuthState;
+  isLocked: boolean;
+  authenticating: boolean;
+  authError: string | null;
+  onAuthenticate: () => void;
+  onCancel: () => void;
+}
+
+// Tela de autenticação extraída como componente para passar como fromChildren
+const AuthScreen: React.FC<AuthScreenProps> = ({
+  theme,
+  t,
+  biometricType,
+  authState,
+  isLocked,
+  authenticating,
+  authError,
+  onAuthenticate,
+  onCancel,
+}) => (
+  <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.authCard, { backgroundColor: theme.colors.surface }]}>
+      <LockIcon
+        locked={isLocked}
+        authState={authState}
+        size={64}
+        color={theme.colors.primary}
+        errorColor={theme.colors.error}
+        loadingColor={theme.colors.tertiary}
+      />
+      <Text style={[styles.title, { color: theme.colors.onSurface }]}>{t('auth.authTitle')}</Text>
+      <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+        {biometricType
+          ? t('auth.authUseBiometric', { type: biometricType })
+          : t('auth.authUsePin')}
+      </Text>
+      {authError && (
+        <Text style={[styles.error, { color: theme.colors.error }]}>{authError}</Text>
+      )}
+      <View style={styles.buttonRow}>
+        <TouchableOpacity
+          style={[styles.authButton, { backgroundColor: theme.colors.primary }]}
+          onPress={onAuthenticate}
+          disabled={authenticating}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.authButtonText, { color: theme.colors.onPrimary }]}>
+            {authenticating ? t('auth.authAuthenticating') : t('auth.authAuthenticateBtn')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity onPress={onCancel}>
+        <Text style={[styles.cancelText, { color: theme.colors.onSurfaceVariant }]}>
+          {t('auth.authCancel')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+);
+
 export const AuthGate: React.FC<AuthGateProps> = ({ children, onAuthenticated }) => {
   const theme = useTheme();
   const { t } = useTranslation();
-  const { authenticate, checkAuthRequired, isAuthReady, settings } = useSettings();
+  const { authenticate, checkAuthRequired, isAuthReady } = useSettings();
   const [showAuth, setShowAuth] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [biometricType, setBiometricType] = useState<string>('');
   const [authState, setAuthState] = useState<AuthState>('idle');
-  const [isLocked, setIsLocked] = useState(true); // Cadeado começa FECHADO
+  const [isLocked, setIsLocked] = useState(true);
   const [showLeafTransition, setShowLeafTransition] = useState(false);
-  const [transitionComplete, setTransitionComplete] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -32,7 +96,6 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, onAuthenticated })
       const required = await checkAuthRequired();
       if (required) {
         setShowAuth(true);
-        // Pre-fetch biometric type for UI
         const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
         if (supportedTypes.length > 0) {
           const type = supportedTypes[0];
@@ -55,7 +118,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, onAuthenticated })
     init();
   }, [isAuthReady, checkAuthRequired]);
 
-  const handleAuthenticate = async () => {
+  const handleAuthenticate = useCallback(async () => {
     setAuthenticating(true);
     setAuthError(null);
     setAuthState('loading');
@@ -64,9 +127,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, onAuthenticated })
     if (result.success) {
       setAuthenticating(false);
       setAuthState('idle');
-      // Anima o cadeado abrindo
-      setIsLocked(false);
-      // Aguarda a animação do cadeado abrir (~500ms) e inicia transição da folha
+      setIsLocked(false); // Cadeado abre
+      // Aguarda animação do cadeado (~500ms) e dispara transição da folha
       setTimeout(() => {
         setShowLeafTransition(true);
       }, 500);
@@ -74,25 +136,24 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, onAuthenticated })
       setAuthError(result.error || t('auth.authFailed'));
       setAuthState('error');
       setAuthenticating(false);
-      // Cadeado shake de erro, depois volta para fechado
       setTimeout(() => {
         setAuthState('idle');
-        setIsLocked(true);
+        setIsLocked(true); // Volta fechado após shake
       }, 1000);
     }
-  };
+  }, [authenticate, t]);
 
-  const handleTransitionComplete = () => {
-    setTransitionComplete(true);
+  const handleTransitionComplete = useCallback(() => {
     setShowAuth(false);
+    setShowLeafTransition(false);
     onAuthenticated?.();
-  };
+  }, [onAuthenticated]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     if (Platform.OS === 'android') {
       Alert.alert(t('auth.authRequired'), t('auth.authRequiredDesc'));
     }
-  };
+  }, [t]);
 
   if (!isAuthReady) {
     return (
@@ -103,70 +164,52 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, onAuthenticated })
     );
   }
 
-  // Se autenticação não é necessária, mostra app direto
+  // Auth não requerida → app direto
   if (!showAuth) {
     return <>{children}</>;
   }
 
-  // Se transição completou, mostra app direto (sem máscara)
-  if (transitionComplete) {
-    return <>{children}</>;
-  }
-
-  // Se transição da folha está ativa, mostra a transição (sem botões de auth)
+  // Transição ativa → CannabisLeafTransition por cima de tudo
   if (showLeafTransition) {
     return (
       <CannabisLeafTransition
         visible={true}
+        fromChildren={
+          <AuthScreen
+            theme={theme}
+            t={t}
+            biometricType={biometricType}
+            authState={authState}
+            isLocked={isLocked}
+            authenticating={authenticating}
+            authError={authError}
+            onAuthenticate={handleAuthenticate}
+            onCancel={handleCancel}
+          />
+        }
+        toChildren={children}
         onComplete={handleTransitionComplete}
-        duration={1200}
-        maskColor={theme.colors.primary}
-      >
-        {children}
-      </CannabisLeafTransition>
+        growDuration={800}
+        shrinkDuration={400}
+        leafColor={theme.colors.primary}
+        swapDelay={50}
+      />
     );
   }
 
-  // Tela de autenticação (cadeado + botões)
+  // Tela de autenticação normal
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.authCard, { backgroundColor: theme.colors.surface }]}>
-        <LockIcon
-          locked={isLocked}
-          authState={authState}
-          size={64}
-          color={theme.colors.primary}
-          errorColor={theme.colors.error}
-          loadingColor={theme.colors.tertiary}
-        />
-        <Text style={[styles.title, { color: theme.colors.onSurface }]}>{t('auth.authTitle')}</Text>
-        <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-          {biometricType
-            ? t('auth.authUseBiometric', { type: biometricType })
-            : t('auth.authUsePin')}
-        </Text>
-        {authError && (
-          <Text style={[styles.error, { color: theme.colors.error }]}>{authError}</Text>
-        )}
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={[styles.authButton, { backgroundColor: theme.colors.primary }]}
-            onPress={handleAuthenticate}
-            disabled={authenticating}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.authButtonText, { color: theme.colors.onPrimary }]}>
-              {authenticating ? t('auth.authAuthenticating') : t('auth.authAuthenticateBtn')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity onPress={handleCancel}>
-          <Text style={[styles.cancelText, { color: theme.colors.onSurfaceVariant }]}>
-            {t('auth.authCancel')}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <AuthScreen
+      theme={theme}
+      t={t}
+      biometricType={biometricType}
+      authState={authState}
+      isLocked={isLocked}
+      authenticating={authenticating}
+      authError={authError}
+      onAuthenticate={handleAuthenticate}
+      onCancel={handleCancel}
+    />
   );
 };
 
