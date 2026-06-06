@@ -8,41 +8,10 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
+import Svg from 'react-native-svg';
+import CannabisLeafSvg from '../../assets/Cannabis_leaf.svg';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// Path SVG de folha de cannabis realista (viewBox 100x100, centrado)
-// Baseado em referência botânica: 7 folíolos serrilhados
-const CANNABIS_LEAF_PATH = `
-  M50 95
-  C35 95 22 82 15 65
-  C8 48 8 30 20 18
-  C25 12 32 10 40 12
-  C45 13 48 18 50 25
-  C52 18 55 13 60 12
-  C68 10 75 12 80 18
-  C92 30 92 48 85 65
-  C78 82 65 95 50 95
-  Z
-  M50 85
-  C42 85 35 76 30 65
-  C25 54 25 42 32 35
-  C36 30 41 28 45 28
-  C48 28 52 30 55 33
-  C50 22 44 18 38 22
-  C32 26 28 32 28 40
-  C28 48 32 54 38 60
-  C44 66 48 72 50 75
-  C52 72 56 66 62 60
-  C68 54 72 48 72 40
-  C72 32 68 26 62 22
-  C56 18 50 22 45 28
-  C41 28 36 30 32 35
-  C25 42 25 54 30 65
-  C35 76 42 85 50 85
-  Z
-`.trim();
 
 export interface CannabisLeafTransitionProps {
   /** Quando true, inicia a animação completa (cresce → troca → encolhe) */
@@ -189,9 +158,7 @@ export const CannabisLeafTransition: React.FC<CannabisLeafTransitionProps> = ({
 
       {/* Folha animada POR CIMA de tudo */}
       <Animated.View style={[styles.leafWrapper, animatedStyle]}>
-        <Svg width={baseSize} height={baseSize} viewBox="0 0 100 100">
-          <Path d={CANNABIS_LEAF_PATH} fill={leafColor} />
-        </Svg>
+        <CannabisLeafSvg width={baseSize} height={baseSize} fill={leafColor} />
       </Animated.View>
     </View>
   );
@@ -216,6 +183,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-
-// Exporta path para customização
-export { CANNABIS_LEAF_PATH };
