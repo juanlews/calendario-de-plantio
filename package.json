@@ -1,6 +1,6 @@
 {
   "name": "calendario-plantio",
-  "version": "0.9.0-alpha",
+  "version": "0.10.0-alpha",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.14",
+    "react-native-svg-transformer": "^1.5.3",
     "typescript": "~6.0.3"
   },
   "private": true
