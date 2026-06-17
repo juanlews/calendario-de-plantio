@@ -2,7 +2,7 @@
 
 App React Native (Expo) para gerenciar o cultivo de cannabis — da semente à cura.
 
-> **Status:** Alfa (v0.8.0) — funcionalidades em desenvolvimento.
+> **Status:** Alfa (v0.10.0) — funcionalidades em desenvolvimento.
 
 📦 **[Baixar APK na página de Releases](https://github.com/juanlews/calendario-de-plantio/releases)**
 
